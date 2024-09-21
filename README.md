@@ -6,13 +6,13 @@ Apache 2.0 License.
 
 > I just change TargetFrameworks to .Net8 and update some of pagckages
 
-[Download from NuGet](http://nuget.org/packages/PdfiumViewer.WPF).
+[Download from NuGet](https://www.nuget.org/packages/PdfiumViewer.Net.WPF).
 
 ![PdfiumViewer.WPF](https://raw.githubusercontent.com/vrjure/PdfiumViewer/master/screenshot.png)
 
 ![PdfiumViewer.WPF](https://raw.githubusercontent.com/vrjure/PdfiumViewer/master/screenshot2.png)
 
-![PdfiumViewer.WPF](https://raw.githubusercontent.com/bezvrjurezad/PdfiumViewer/master/screenshot3.png)
+![PdfiumViewer.WPF](https://raw.githubusercontent.com/vrjure/PdfiumViewer/master/screenshot3.png)
 
 ## Introduction
 
