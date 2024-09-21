@@ -20,7 +20,7 @@ namespace PdfiumViewer.Core
         {
             lock (LockString)
             {
-                Imports.FPDF_AddRef();
+                Imports.FPDF_InitLibrary();
             }
         }
 
@@ -28,7 +28,7 @@ namespace PdfiumViewer.Core
         {
             lock (LockString)
             {
-                Imports.FPDF_Release();
+                Imports.FPDF_DestroyLibrary();
             }
         }
 
@@ -590,10 +590,10 @@ namespace PdfiumViewer.Core
         private static class Imports
         {
             [DllImport("pdfium.dll")]
-            public static extern void FPDF_AddRef();
+            public static extern void FPDF_InitLibrary();
 
             [DllImport("pdfium.dll")]
-            public static extern void FPDF_Release();
+            public static extern void FPDF_DestroyLibrary();
 
             [DllImport("pdfium.dll", CharSet = CharSet.Ansi)]
             public static extern IntPtr FPDF_LoadCustomDocument([MarshalAs(UnmanagedType.LPStruct)] FPDF_FILEACCESS access, string password);
