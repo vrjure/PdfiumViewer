@@ -4,7 +4,10 @@ Apache 2.0 License.
 
 > Note: this is a .Net Core WPF port of [PdfiumViewer](https://github.com/bezzad/PdfiumViewer)
 
-> I just change TargetFrameworks to .Net8 and update some of pagckages
+> Here are some of the changes
+
+- For V1.0: I just change TargetFrameworks to .Net8 and update some of pagckages
+- For V2.0：PdfRender can no longer be used,it has been replaced by PDFViewer. In order to use Mvvm I add DependencyProperty.But now there is only the view function
 
 [Download from NuGet](https://www.nuget.org/packages/PdfiumViewer.Net.WPF).
 

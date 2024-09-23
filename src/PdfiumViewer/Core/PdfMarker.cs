@@ -8,7 +8,7 @@ using Pen = System.Windows.Media.Pen;
 
 namespace PdfiumViewer.Core
 {
-    public class PdfMarker : IPdfMarker
+    internal class PdfMarker : IPdfMarker
     {
         public int Page { get; }
         public RectangleF Bounds { get; }

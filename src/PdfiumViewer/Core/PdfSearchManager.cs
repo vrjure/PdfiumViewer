@@ -11,7 +11,7 @@ namespace PdfiumViewer.Core
     /// <summary>
     /// Helper class for searching through PDF documents.
     /// </summary>
-    public class PdfSearchManager
+    internal class PdfSearchManager
     {
         private bool _highlightAllMatches;
         private PdfMatches _matches;
@@ -86,7 +86,7 @@ namespace PdfiumViewer.Core
         /// Creates a new instance of the search manager.
         /// </summary>
         /// <param name="renderer">The renderer to create the search manager for.</param>
-        public PdfSearchManager(PdfRenderer renderer)
+        internal PdfSearchManager(PdfRenderer renderer)
         {
             Renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
 

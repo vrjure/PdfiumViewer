@@ -5,7 +5,7 @@ namespace PdfiumViewer.Core
     /// <summary>
     /// Represents a marker on a PDF page.
     /// </summary>
-    public interface IPdfMarker
+    internal interface IPdfMarker
     {
         /// <summary>
         /// The page where the marker is drawn on.

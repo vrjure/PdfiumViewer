@@ -4,7 +4,7 @@ using System.Collections.Specialized;
 
 namespace PdfiumViewer.Core
 {
-    public class PdfMarkerCollection : Collection<IPdfMarker>, INotifyCollectionChanged
+    internal class PdfMarkerCollection : Collection<IPdfMarker>, INotifyCollectionChanged
     {
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 

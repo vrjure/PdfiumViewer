@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0-windows</TargetFrameworks>
     <UseWPF>true</UseWPF>
-    <Version>1.0.0</Version>
+    <Version>2.0.0</Version>
     <Authors>Vrjure</Authors>
     <Description>PDF viewer based on Google's PDFium port to .Net Core.</Description>
     <Copyright>Copyright © 2024 Vrjure</Copyright>
@@ -15,9 +15,9 @@
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <PackageId>PdfiumViewer.Net.WPF</PackageId>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReleaseNotes>.Net 8 Support</PackageReleaseNotes>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <PackageReleaseNotes>.Net 8 Support. Since2.0 PdfRender can no longer be used,it has been replaced by PDFViewer. In order to use Mvvm I add DependencyProperty.But now there is only the view function</PackageReleaseNotes>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
