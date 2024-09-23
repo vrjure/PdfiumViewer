@@ -5,7 +5,7 @@ using System.Windows.Input;
 
 namespace PdfiumViewer
 {
-    public partial class ScrollPanel
+    partial class PdfRenderer
     {
         // Note: don't change the below fields to Property.
         // Note: Because INotifyPropertyChanged event change the page number!
@@ -25,7 +25,7 @@ namespace PdfiumViewer
         /// Friction Attached Dependency Property
         /// </summary>
         public static readonly DependencyProperty FrictionProperty =
-            DependencyProperty.RegisterAttached(nameof(Friction), typeof(double), typeof(ScrollPanel), 
+            DependencyProperty.RegisterAttached(nameof(Friction), typeof(double), typeof(PdfRenderer), 
                 new FrameworkPropertyMetadata(DefaultFriction));
 
         public double Friction
@@ -41,9 +41,7 @@ namespace PdfiumViewer
         /// <summary>
         /// EnableKinetic Attached Dependency Property
         /// </summary>
-        public static readonly DependencyProperty EnableKineticProperty =
-            DependencyProperty.RegisterAttached(nameof(EnableKinetic), typeof(bool), typeof(ScrollPanel), 
-                new FrameworkPropertyMetadata(false));
+        public static readonly DependencyProperty EnableKineticProperty = DependencyProperty.Register(nameof(EnableKinetic), typeof(bool), typeof(PdfRenderer), new FrameworkPropertyMetadata(false));
 
         public bool EnableKinetic
         {
@@ -51,7 +49,6 @@ namespace PdfiumViewer
             set
             {
                 SetValue(EnableKineticProperty, value);
-                Cursor = value ? Cursors.Hand : Cursors.Arrow;
             }
         }
 

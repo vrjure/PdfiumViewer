@@ -185,7 +185,7 @@ namespace PdfiumViewer.Core
         {
             for (int i = 0; i < Renderer.Document.PageCount; i++)
             {
-                int page = (i + Renderer.PageNo) % Renderer.Document.PageCount;
+                int page = (i + Renderer.Page) % Renderer.Document.PageCount;
 
                 for (int j = 0; j < _matches.Items.Count; j++)
                 {

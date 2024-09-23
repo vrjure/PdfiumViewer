@@ -10,7 +10,7 @@ using PdfiumViewer.Enums;
 namespace PdfiumViewer
 {
     // ScrollPanel.PdfDocument
-    public partial class ScrollPanel
+    partial class PdfRenderer
     {
         public void Render(int page, Graphics graphics, float dpiX, float dpiY, Rectangle bounds, bool forPrinting)
         {
@@ -100,7 +100,7 @@ namespace PdfiumViewer
         public void RotatePage(int page, PdfRotation rotate)
         {
             Rotate = rotate;
-            OnPagesDisplayModeChanged();
+            OnPagesDisplayChanged();
         }
 
         public PdfInformation GetInformation()
@@ -146,19 +146,25 @@ namespace PdfiumViewer
 
         public void GotoPage(int page)
         {
-            if (IsDocumentLoaded)
+            if (!IsDocumentLoaded || page >= PageCount || page < 0)
             {
-                PageNo = page;
+                return;
+            }
+
+            if (PagesDisplayMode == PdfViewerPagesDisplayMode.SinglePageMode && page < PageCount)
+            {
                 CurrentPageSize = CalculatePageSize(page);
-
                 RenderPage(Frame1, page, CurrentPageSize.Width, CurrentPageSize.Height);
-
-                if (PagesDisplayMode == PdfViewerPagesDisplayMode.BookMode && page + 1 < Document.PageCount)
-                {
-                    RenderPage(Frame2, page + 1, CurrentPageSize.Width, CurrentPageSize.Height);
-                }
-
-                ScrollToPage(PageNo);
+            }
+            else if (PagesDisplayMode == PdfViewerPagesDisplayMode.BookMode && page + 1 < PageCount)
+            {
+                CurrentPageSize = CalculatePageSize(page);
+                RenderPage(Frame1, page, CurrentPageSize.Width, CurrentPageSize.Height);
+                RenderPage(Frame2, page + 1, CurrentPageSize.Width, CurrentPageSize.Height);
+            }
+            else
+            {
+                ScrollToPage(Page);
             }
         }
         public void NextPage()
@@ -166,7 +172,7 @@ namespace PdfiumViewer
             if (IsDocumentLoaded)
             {
                 var extentVal = PagesDisplayMode == PdfViewerPagesDisplayMode.BookMode ? 2 : 1;
-                GotoPage(Math.Min(Math.Max(PageNo + extentVal, 0), PageCount - extentVal));
+                GotoPage(Math.Min(Math.Max(Page + extentVal, 0), PageCount - extentVal));
             }
         }
         public void PreviousPage()
@@ -174,7 +180,7 @@ namespace PdfiumViewer
             if (IsDocumentLoaded)
             {
                 var extentVal = PagesDisplayMode == PdfViewerPagesDisplayMode.BookMode ? 2 : 1;
-                GotoPage(Math.Min(Math.Max(PageNo - extentVal, 0), PageCount - extentVal));
+                GotoPage(Math.Min(Math.Max(Page - extentVal, 0), PageCount - extentVal));
             }
         }
     }
