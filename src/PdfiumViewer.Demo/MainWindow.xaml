@@ -169,19 +169,19 @@
             </TextBlock>
             <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
-            <!--<Button ToolTip="Zoom in" 
+            <Button ToolTip="Zoom in" 
                     Command="{Binding ZoomInCommand}">
                 <Image Source="Resources/zoom_in.png" />
             </Button>
             <Button ToolTip="Zoom out"
                     Command="{Binding ZoomOutCommand}">
                 <Image Source="Resources/zoom_out.png" />
-            </Button>-->
-            <!--<TextBox x:Name="TxtZoomPercent" Width="50" Text="{Binding Zoom, Mode=TwoWay}" TextAlignment="Center" Background="Bisque" >
+            </Button>
+            <TextBox x:Name="TxtZoomPercent" Width="50" Text="{Binding Zoom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Center" Background="Bisque" >
                 <b:Interaction.Behaviors>
                     <converters:AllowableCharactersTextBoxBehavior RegularExpression="^[0-9.\-]+$" MaxLength="7" />
                 </b:Interaction.Behaviors>
-            </TextBox>-->
+            </TextBox>
             <!--<TextBlock VerticalAlignment="Center" FontSize="14" Text="%" />
             <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
@@ -242,7 +242,10 @@
                                   Source="{Binding PdfPath}"
                                   Document="{Binding Document, Mode=TwoWay}"
                                   Page="{Binding Page, Mode=TwoWay}"
-                                  PageCount="{Binding PageCount, Mode=OneWayToSource}"/>
+                                  PageCount="{Binding PageCount, Mode=OneWayToSource}"
+                                  Zoom="{Binding Zoom, Mode=TwoWay}"
+                                ZoomMax="{Binding ZoomMax}"
+                                ZoomMin="{Binding ZoomMin}"/>
 
         <!--<StatusBar Grid.Row="2" Grid.Column="0">
             <StatusBarItem Content="Page:" />

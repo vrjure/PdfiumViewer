@@ -17,7 +17,7 @@ using System.Diagnostics;
 namespace PdfiumViewer
 {
     [TemplatePart(Name ="PART_Scroll")]
-    public class PDFViewer : ItemsControl
+    public partial class PDFViewer : ItemsControl
     {
 
         public static readonly DependencyProperty PageProperty = DependencyProperty.Register(nameof(Page), typeof(int), typeof(PDFViewer), new FrameworkPropertyMetadata(0, PropertyChanged, PageCoerceValueChanged));
@@ -68,6 +68,30 @@ namespace PdfiumViewer
             get => (PdfRotation)GetValue(RotateProperty);
             set => SetValue(RotateProperty, value);
         }
+
+        public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register(nameof(Zoom), typeof(double), typeof(PDFViewer), new FrameworkPropertyMetadata(1d, PropertyChanged, ZoomCoerceValueChanged));
+        public double Zoom
+        {
+            get => (double)GetValue(ZoomProperty);
+            set => SetValue(ZoomProperty, value);
+        }
+
+        public static readonly DependencyProperty ZoomMinProperty = DependencyProperty.Register(nameof(ZoomMin), typeof(double), typeof(PDFViewer), new FrameworkPropertyMetadata(DefaultZoomMin, PropertyChanged, ZoomMinCoerceValueChanged));
+        public double ZoomMin
+        {
+            get => (double)GetValue(ZoomMinProperty);
+            set => SetValue(ZoomMinProperty, value);
+        }
+
+        public static readonly DependencyProperty ZoomMaxProperty = DependencyProperty.Register(nameof(ZoomMax), typeof(double), typeof(PDFViewer), new FrameworkPropertyMetadata(DefaultZoomMax, PropertyChanged, ZoomMaxCoerceValueChanged));
+        public double ZoomMax
+        {
+            get => (double)GetValue(ZoomMaxProperty);
+            set => SetValue(ZoomMaxProperty, value);
+        }
+
+        private const double DefaultZoomMin = 0.1;
+        private const double DefaultZoomMax = 5;
 
         static PDFViewer()
         {
@@ -139,6 +163,21 @@ namespace PdfiumViewer
                 }
                 v.ToPage();
             }
+            else if (e.Property == ZoomProperty)
+            {
+                v.PageSizeRefresh();
+            }
+            else if (e.Property == ZoomMinProperty || e.Property == ZoomMaxProperty)
+            {
+                if (v.Zoom < v.ZoomMin)
+                {
+                    v.Zoom = v.ZoomMin;
+                }
+                else if (v.Zoom > v.ZoomMax)
+                {
+                    v.Zoom = v.ZoomMax;
+                }
+            }
         }
 
         private void SourceChanged()
@@ -165,22 +204,32 @@ namespace PdfiumViewer
                 return;
             }
 
-            DocumentRefresh();
+            PageSizeRefresh();
         }
 
-        private void DocumentRefresh()
+        private void PageSizeRefresh()
         {
             SetCurrentValue(PageCountProperty, GetPageCount());
             if (PageCount == 0)
             {
                 return;
             }
-            
+
             for (var i = 0; i < PageCount; i++)
             {
                 var size = Document.GetPageSize(i);
-                var image = new Image() { Width = size.Width, Height = size.Height };
-                Items.Add(image);
+                var width = size.Width * Zoom;
+                var height = size.Height * Zoom;
+                if (i < Items.Count && Items[i] is Image img)
+                {
+                    img.Width = width;
+                    img.Height = height;
+                }
+                else
+                {
+                    var image = new Image() { Width = width, Height = height };
+                    Items.Add(image);
+                }
             }
         }
 
@@ -240,7 +289,7 @@ namespace PdfiumViewer
                 {
                     frame.Source = null;
                 }
-                else if (frame.Source == null)
+                else if (frame.Source == null || frame.Width != (int)frame.Source.Width || frame.Height != (int)frame.Source.Height)
                 {
                     RenderPage(frame, i, (int)frame.Width, (int)frame.Height);
                 }
@@ -268,22 +317,5 @@ namespace PdfiumViewer
             frame.Height = height;
             frame.Source = bitmapImage;
         }
-
-
-        private static object PageCoerceValueChanged(DependencyObject d, object value)
-        {
-            var v = d as PDFViewer;
-            var page = (int)value;
-            if (page < 0)
-            {
-                return 0;
-            }
-            else if (page >= v.PageCount)
-            {
-                return Math.Max(v.PageCount - 1, 0);
-            }
-            return value;
-        }
-
     }
 }
