@@ -120,7 +120,8 @@ namespace PdfiumViewer
 
 
         private int _scrollPage;
-
+        private int _renderStartIndex;
+        private int _renderEndIndex;
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
@@ -178,12 +179,16 @@ namespace PdfiumViewer
                     v.Zoom = v.ZoomMax;
                 }
             }
+            else if (e.Property == DpiProperty)
+            {
+                v.Render(true);
+            }
         }
 
         private void SourceChanged()
         {
             if (Source != null)
-            {
+            {          
                 SetCurrentValue(DocumentProperty, PdfDocument.Load(Source));
             }
             else
@@ -210,7 +215,7 @@ namespace PdfiumViewer
         private void PageSizeRefresh()
         {
             SetCurrentValue(PageCountProperty, GetPageCount());
-            if (PageCount == 0)
+            if (PageCount <= 0)
             {
                 return;
             }
@@ -240,6 +245,10 @@ namespace PdfiumViewer
 
         private void ToPage()
         {
+            if (Items == null || Page >= Items.Count)
+            {
+                return;
+            }
             var offset = 0d;
             for (int i = 0; i < Page; i++)
             {
@@ -251,7 +260,7 @@ namespace PdfiumViewer
 
         private void _scroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            if (Document == null || Items.Count == 0)
+            if (Document == null || Items == null || Items.Count == 0)
             {
                 return;
             }
@@ -262,24 +271,29 @@ namespace PdfiumViewer
 
             var offset_v = e.VerticalOffset;
 
-            var startIndex = (int)(offset_v / pageSize.Height);
-            var endIndex = (int)((offset_v + viewPort_h) / pageSize.Height);
+            _renderStartIndex = (int)(offset_v / pageSize.Height);
+            _renderEndIndex = (int)((offset_v + viewPort_h) / pageSize.Height);
 
-            Trace.WriteLine($"[{startIndex},{endIndex}],[{e.VerticalChange}, {e.VerticalOffset}]");
+            Debug.WriteLine($"[{_renderStartIndex},{_renderEndIndex}],[{e.VerticalChange}, {e.VerticalOffset}]");
 
-            if (startIndex <= endIndex && startIndex >= 0 )
+            Render();
+        }
+
+        private void Render(bool force = false)
+        {
+            if (_renderStartIndex <= _renderEndIndex && _renderStartIndex >= 0)
             {
-                Render(startIndex, Math.Min(endIndex, Items.Count - 1));
+                Render(_renderStartIndex, Math.Min(_renderEndIndex, Items.Count - 1), force);
             }
 
-            _scrollPage = (endIndex + startIndex) / 2;
+            _scrollPage = (_renderEndIndex + _renderStartIndex) / 2;
             if (_scrollPage < Items.Count)
             {
                 SetCurrentValue(PageProperty, _scrollPage);
             }
         }
 
-        private void Render(int startIndex, int endIndex)
+        private void Render(int startIndex, int endIndex, bool force = false)
         {
             for (int i = 0; i < Items.Count; i++)
             {
@@ -289,7 +303,7 @@ namespace PdfiumViewer
                 {
                     frame.Source = null;
                 }
-                else if (frame.Source == null || frame.Width != (int)frame.Source.Width || frame.Height != (int)frame.Source.Height)
+                else if (force || frame.Source == null || frame.Width != (int)frame.Source.Width || frame.Height != (int)frame.Source.Height)
                 {
                     RenderPage(frame, i, (int)frame.Width, (int)frame.Height);
                 }

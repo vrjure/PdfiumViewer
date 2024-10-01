@@ -39,7 +39,6 @@ namespace PdfiumViewer.Core
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
-
             return Load(File.OpenRead(path), password);
         }
 
