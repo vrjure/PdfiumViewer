@@ -20,11 +20,8 @@ namespace PdfiumViewer.Demo.ViewModels
         private ICommand _openPdfCommand;
         public ICommand OpenPdfCommand => _openPdfCommand ??= new RelayCommand(OpenPdf);
 
-        private ICommand _saveAsImagesCommand;
-        public ICommand SaveAsImagesCommand => _saveAsImagesCommand ??= new RelayCommand(SaveAsImages);
-
-        private ICommand _renderAllCommand;
-        public ICommand RenderAllCommand => _renderAllCommand ??= new RelayCommand(() => RenderAll = true);
+        private ICommand _saveImageCommand;
+        public ICommand SaveImageCommand => _saveImageCommand ??= new RelayCommand(SaveAsImage);
 
         private ICommand _showBookMarksCommand;
         public ICommand ShowBookMarksCommand => _showBookMarksCommand ??= new RelayCommand(() => ShowBookmarks = true);
@@ -249,29 +246,20 @@ namespace PdfiumViewer.Demo.ViewModels
             }
         }
 
-        private void SaveAsImages()
+        private void SaveAsImage()
         {
             // Create a "Save As" dialog for selecting a directory (HACK)
-            var dialog = new Microsoft.Win32.SaveFileDialog
+            var dialog = new Microsoft.Win32.OpenFolderDialog
             {
                 Title = "Select a Directory",
-                Filter = "Directory|*.this.directory",
-                FileName = "select"
+                Multiselect = false
             };
             // instead of default "Save As"
             // Prevents displaying files
             // Filename will then be "select.this.directory"
             if (dialog.ShowDialog() == true)
             {
-                string path = dialog.FileName;
-                // Remove fake filename from resulting path
-                path = path.Replace("\\select.this.directory", "");
-                path = path.Replace(".this.directory", "");
-                // If user has changed the filename, create the new directory
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
+                string path = dialog.FolderName;
                 // Our final value is in path
                 SaveAsImages(path);
             }
@@ -287,8 +275,8 @@ namespace PdfiumViewer.Demo.ViewModels
             {
                 for (var i = 0; i < Document.PageCount; i++)
                 {
-                    var size = Document.PageSizes[i];
-                    var image = Document.Render(i, (int)size.Width * 5, (int)size.Height * 5, 300, 300, false);
+                    var size = Document.GetPageSize(i);
+                    var image = Document.Render(i, (int)size.Width, (int)size.Height, 96, 96, false);
                     image.Save(Path.Combine(path, $"img{i}.png"));
                 }
             }

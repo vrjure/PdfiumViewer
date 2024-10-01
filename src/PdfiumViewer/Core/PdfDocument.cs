@@ -120,18 +120,12 @@ namespace PdfiumViewer.Core
         /// </summary>
         public PdfBookmarkCollection Bookmarks => _file.Bookmarks;
 
-        /// <summary>
-        /// Size of each page in the PDF document.
-        /// </summary>
-        public IList<SizeF> PageSizes { get; private set; }
-
         private PdfDocument(Stream stream, string password)
         {
             _file = new PdfFile(stream, password);
             _pageSizes = new List<SizeF>(PageCount);
             for (var i = 0; i < PageCount; i++)
                 _pageSizes.Add(new SizeF());
-            PageSizes = new ReadOnlyCollection<SizeF>(_pageSizes);
         }
 
         /// <summary>
@@ -215,7 +209,7 @@ namespace PdfiumViewer.Core
         /// <returns>The rendered image.</returns>
         public Image Render(int page, float dpiX, float dpiY, bool forPrinting)
         {
-            var size = PageSizes[page];
+            var size = _pageSizes[page];
 
             return Render(page, (int)size.Width, (int)size.Height, dpiX, dpiY, forPrinting);
         }
@@ -230,7 +224,7 @@ namespace PdfiumViewer.Core
         /// <returns>The rendered image.</returns>
         public Image Render(int page, float dpiX, float dpiY, PdfRenderFlags flags)
         {
-            var size = PageSizes[page];
+            var size = _pageSizes[page];
 
             return Render(page, (int)size.Width, (int)size.Height, dpiX, dpiY, flags);
         }

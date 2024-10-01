@@ -20,15 +20,13 @@
                     Command="{Binding OpenPdfCommand}">
                 <Image Source="Resources/open_pdf.png" />
             </Button>
-            <!--<Button ToolTip="Save as Images"
+            
+            <Button ToolTip="Save as Images"
                     Command="{Binding SaveImageCommand}">
                 <Image Source="Resources/save.png" />
             </Button>
-            <Button ToolTip="Render all pages"
-                    Command="{Binding RenderAllCommand}">
-                <Image Source="Resources/render_all_pages.png" />
-            </Button>
-             <Button Name="BtnShowBookmarks" ToolTip="Show Bookmarks"
+
+             <!--<Button Name="BtnShowBookmarks" ToolTip="Show Bookmarks"
                      Command="{Binding ShowBookMarksCommand}">
                 <Image Source="Resources/show_bookmarks.png" />
             </Button>-->

@@ -25,11 +25,6 @@ namespace PdfiumViewer
         PdfBookmarkCollection Bookmarks { get; }
 
         /// <summary>
-        /// Size of each page in the PDF document.
-        /// </summary>
-        IList<SizeF> PageSizes { get; }
-
-        /// <summary>
         /// Renders a page of the PDF document to the provided graphics instance.
         /// </summary>
         /// <param name="page">Number of the page to render.</param>
