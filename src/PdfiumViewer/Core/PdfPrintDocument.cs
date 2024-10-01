@@ -50,7 +50,7 @@ namespace PdfiumViewer.Core
 
             if (_settings.MultiplePages == null && _currentPage < _document.PageCount)
             {
-                var landscape = GetOrientation(_document.PageSizes[_currentPage]) == Orientation.Landscape;
+                var landscape = GetOrientation(_document.GetPageSize(_currentPage)) == Orientation.Landscape;
 
                 if (inverseLandscape)
                     landscape = !landscape;
@@ -121,7 +121,7 @@ namespace PdfiumViewer.Core
         {
             if (_currentPage < _document.PageCount)
             {
-                var pageOrientation = GetOrientation(_document.PageSizes[_currentPage]);
+                var pageOrientation = GetOrientation(_document.GetPageSize(_currentPage));
                 var printOrientation = GetOrientation(e.PageBounds.Size);
 
                 e.PageSettings.Landscape = pageOrientation == Orientation.Landscape;
@@ -165,7 +165,7 @@ namespace PdfiumViewer.Core
 
         private void RenderPage(PrintPageEventArgs e, int page, double left, double top, double width, double height)
         {
-            var size = _document.PageSizes[page];
+            var size = _document.GetPageSize(page);
 
             double pageScale = size.Height / size.Width;
             var printScale = height / width;

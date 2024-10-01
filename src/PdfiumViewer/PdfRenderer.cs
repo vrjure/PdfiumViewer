@@ -21,7 +21,7 @@ using Size = System.Drawing.Size;
 namespace PdfiumViewer
 {
     // ScrollPanel.Properties
-    partial class PdfRenderer : ScrollViewer, IPdfDocument
+    partial class PdfRenderer : ScrollViewer
     {
         public static readonly DependencyProperty PageProperty = DependencyProperty.Register(nameof(Page), typeof(int), typeof(PdfRenderer), new FrameworkPropertyMetadata(0, PropertyChanged));
         public int Page
@@ -195,7 +195,6 @@ namespace PdfiumViewer
         public bool IsDocumentLoaded => Document != null && ActualWidth > 0 && ActualHeight > 0;
 
         public PdfBookmarkCollection Bookmarks => Document?.Bookmarks;
-        public IList<SizeF> PageSizes => Document?.PageSizes;
 
         protected void ScrollToPage(int page)
         {

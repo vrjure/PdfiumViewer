@@ -173,6 +173,12 @@ namespace PdfiumViewer
         /// <param name="size">The size of the page.</param>
         /// <returns>A collection with the links on the page.</returns>
         PdfPageLinks GetPageLinks(int page, Size size);
+        /// <summary>
+        /// get page size, size will be cached
+        /// </summary>
+        /// <param name="page"></param>
+        /// <returns>page size</returns>
+        SizeF GetPageSize(int pageNo);
 
         /// <summary>
         /// Delete the page from the PDF document.

@@ -24,7 +24,7 @@ namespace PdfiumViewer.Demo.ViewModels
         public ICommand SaveImageCommand => _saveImageCommand ??= new RelayCommand(SaveAsImage);
 
         private ICommand _showBookMarksCommand;
-        public ICommand ShowBookMarksCommand => _showBookMarksCommand ??= new RelayCommand(() => ShowBookmarks = true);
+        public ICommand ShowBookMarksCommand => _showBookMarksCommand ??= new RelayCommand(() => ShowBookmarks = !ShowBookmarks);
 
         private ICommand _searchOpnCloseCommand;
         public ICommand SearchOpenCloseCommand => _searchOpnCloseCommand ??= new RelayCommand(() => IsSearchOpen = !IsSearchOpen);
@@ -69,8 +69,8 @@ namespace PdfiumViewer.Demo.ViewModels
             set => SetProperty(ref _pdfPath, value);
         }
 
-        private PdfDocument _document;
-        public PdfDocument Document
+        private IPdfDocument _document;
+        public IPdfDocument Document
         {
             get => _document;
             set => SetProperty(ref _document, value);
@@ -94,7 +94,13 @@ namespace PdfiumViewer.Demo.ViewModels
         public PdfBookmark SelectedBookMark
         {
             get => _selectedBookMark;
-            set => SetProperty(ref _selectedBookMark, value);
+            set
+            {
+                if(SetProperty(ref _selectedBookMark, value))
+                {
+                    SelectedBookmarkChanged();
+                }
+            }
         }
 
         private bool _isSearchOpen;
@@ -285,6 +291,16 @@ namespace PdfiumViewer.Demo.ViewModels
                 Debug.Fail(ex.Message);
                 MessageBox.Show(ex.Message, "Error!");
             }
+        }
+
+        private void SelectedBookmarkChanged()
+        {
+            if (SelectedBookMark == null)
+            {
+                return;
+            }
+
+            Page = SelectedBookMark.PageIndex;
         }
 
         //public void Search()
