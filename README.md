@@ -7,7 +7,17 @@ Apache 2.0 License.
 > Here are some of the changes
 
 - For V1.0: I just change TargetFrameworks to .Net8 and update some of pagckages
-- For V2.0：PdfRender can no longer be used,it has been replaced by PDFViewer. In order to use Mvvm I add DependencyProperty.But now there is only the view function
+- For V2.0：Pdfrender is no longer available,it has been replaced by PDFViewer. In order to use Mvvm I add DependencyProperty.But now it's just the view function
+- For V3.0: `PdfiumViewer.Native.x86.v8-xfa` and `PdfiumViewer.Native.x86_64.v8-xfa` are no longer used. I switch to [pdfium-binaries](https://github.com/bblanchon/pdfium-binaries). It's not fully functional. These are the features that have been implemented:
+
+- [x] view
+- [x] save as image
+- [x] zoom
+- [x] search text
+- [x] bookmarks
+- [ ] page mode switch
+- [ ] rotate
+- [ ] get page text
 
 [Download from NuGet](https://www.nuget.org/packages/PdfiumViewer.Net.WPF).
 
