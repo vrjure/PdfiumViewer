@@ -90,6 +90,22 @@ namespace PdfiumViewer
             set => SetValue(ZoomMaxProperty, value);
         }
 
+        private static readonly DependencyPropertyKey RenderStartIndexPropertyKey = DependencyProperty.RegisterReadOnly(nameof(RenderStartIndex), typeof(int), typeof(PDFViewer), new PropertyMetadata(0, PropertyChanged));
+        public static readonly DependencyProperty RenderStartIndexProperty = RenderStartIndexPropertyKey.DependencyProperty;
+        public int RenderStartIndex
+        {
+            get => (int)GetValue(RenderStartIndexPropertyKey.DependencyProperty);
+            private set => SetValue(RenderStartIndexPropertyKey, value);
+        }
+
+        private static readonly DependencyPropertyKey RenderEndIndexPropertyKey = DependencyProperty.RegisterReadOnly(nameof(RenderEndIndex), typeof(int), typeof(PDFViewer), new PropertyMetadata(0, PropertyChanged));
+        public static readonly DependencyProperty RenderEndIndexProperty = RenderEndIndexPropertyKey.DependencyProperty;
+        public int RenderEndIndex
+        {
+            get => (int)GetValue(RenderEndIndexPropertyKey.DependencyProperty);
+            private set => SetValue(RenderEndIndexPropertyKey, value);
+        }
+
         private const double DefaultZoomMin = 0.1;
         private const double DefaultZoomMax = 5;
 
@@ -120,8 +136,7 @@ namespace PdfiumViewer
 
 
         private int _scrollPage;
-        private int _renderStartIndex;
-        private int _renderEndIndex;
+
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
@@ -185,11 +200,15 @@ namespace PdfiumViewer
             }
             else if (e.Property == HighlightAllMatchesProperty || e.Property == MatchesProperty)
             {
-                v.OnMatchesChanged(e.NewValue as PdfMatches);
+                v.OnMatchesChanged();
             }
             else if (e.Property == MatchIndexProperty)
             {
                 v.OnMatchIndexChanged((int)e.NewValue, (int)e.OldValue);
+            }
+            else if (e.Property == RenderStartIndexProperty || e.Property == RenderEndIndexProperty)
+            {
+                v.RenderMarkers();
             }
         }
 
@@ -279,22 +298,22 @@ namespace PdfiumViewer
 
             var offset_v = e.VerticalOffset;
 
-            _renderStartIndex = (int)(offset_v / pageSize.Height);
-            _renderEndIndex = (int)((offset_v + viewPort_h) / pageSize.Height);
+            RenderStartIndex = (int)(offset_v / pageSize.Height);
+            RenderEndIndex = (int)((offset_v + viewPort_h) / pageSize.Height);
 
-            Debug.WriteLine($"[{_renderStartIndex},{_renderEndIndex}],[{e.VerticalChange}, {e.VerticalOffset}]");
+            Debug.WriteLine($"[{RenderStartIndex},{RenderEndIndex}],[{e.VerticalChange}, {e.VerticalOffset}]");
 
             Render();
         }
 
         private void Render(bool force = false)
         {
-            if (_renderStartIndex <= _renderEndIndex && _renderStartIndex >= 0)
+            if (RenderStartIndex <= RenderEndIndex && RenderStartIndex >= 0)
             {
-                Render(_renderStartIndex, Math.Min(_renderEndIndex, Items.Count - 1), force);
+                Render(RenderStartIndex, Math.Min(RenderEndIndex, Items.Count - 1), force);
             }
 
-            _scrollPage = (_renderEndIndex + _renderStartIndex) / 2;
+            _scrollPage = (RenderEndIndex + RenderStartIndex) / 2;
             if (_scrollPage < Items.Count)
             {
                 SetCurrentValue(PageProperty, _scrollPage);

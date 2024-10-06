@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="PDFiumCore" Version="130.0.6693" />
+    <PackageReference Include="bblanchon.PDFium.Win32" Version="130.0.6721" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 

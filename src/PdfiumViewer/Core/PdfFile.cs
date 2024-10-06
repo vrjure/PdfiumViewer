@@ -97,7 +97,7 @@ namespace PdfiumViewer.Core
                     string uri = null;
 
                     if (destination != IntPtr.Zero)
-                        target = (int)NativeMethods.FPDFDest_GetPageIndex(_document, destination);
+                        target = (int)NativeMethods.FPDFDest_GetDestPageIndex(_document, destination);
 
                     var action = NativeMethods.FPDFLink_GetAction(annotation);
                     if (action != IntPtr.Zero)
@@ -233,7 +233,7 @@ namespace PdfiumViewer.Core
         {
             var dest = NativeMethods.FPDF_BookmarkGetDest(_document, bookmark);
             if (dest != IntPtr.Zero)
-                return NativeMethods.FPDFDest_GetPageIndex(_document, dest);
+                return NativeMethods.FPDFDest_GetDestPageIndex(_document, dest);
 
             return 0;
         }
@@ -286,11 +286,11 @@ namespace PdfiumViewer.Core
             return new PdfMatches(startPage, endPage, matches);
         }
 
-        public IList<PdfRectangle> GetTextBounds(PdfTextSpan textSpan)
+        public PdfRectangle GetTextBound(PdfTextSpan textSpan)
         {
             using (var pageData = new PageData(_document, _form, textSpan.Page))
             {
-                return GetTextBounds(pageData.TextPage, textSpan.Page, textSpan.Offset, textSpan.Length);
+                return GetTextBound(pageData.TextPage, pageData, textSpan.Page, textSpan.Offset, textSpan.Length);
             }
         }
 
@@ -315,7 +315,7 @@ namespace PdfiumViewer.Core
             }
         }
 
-        public Rectangle RectangleFromPdf(int page, RectangleF rect)
+        public RectangleF RectangleFromPdf(int page, RectangleF rect)
         {
             using (var pageData = new PageData(_document, _form, page))
             {
@@ -345,13 +345,88 @@ namespace PdfiumViewer.Core
                     out var deviceY2
                 );
 
-                return new Rectangle(
+                return new RectangleF(
                     deviceX1,
                     deviceY1,
                     deviceX2 - deviceX1,
                     deviceY2 - deviceY1
                 );
             }
+        }
+
+        public RectangleF RectangleFromPdf(int page, double left, double top, double right, double bottom)
+        {
+            using (var pageData = new PageData(_document, _form, page))
+            {
+                NativeMethods.FPDF_PageToDevice(
+                    pageData.Page,
+                    0,
+                    0,
+                    (int)pageData.Width,
+                    (int)pageData.Height,
+                    0,
+                    left,
+                    top,
+                    out var deviceX1,
+                    out var deviceY1
+                );
+
+                NativeMethods.FPDF_PageToDevice(
+                    pageData.Page,
+                    0,
+                    0,
+                    (int)pageData.Width,
+                    (int)pageData.Height,
+                    0,
+                    right,
+                    bottom,
+                    out var deviceX2,
+                    out var deviceY2
+                );
+
+                return new RectangleF(
+                    deviceX1,
+                    deviceY1,
+                    deviceX2 - deviceX1,
+                    deviceY2 - deviceY1
+                );
+            }
+        }
+
+        private RectangleF RectangleFromPdf(PageData pageData, double left, double top, double right, double bottom)
+        {
+            NativeMethods.FPDF_PageToDevice(
+                pageData.Page,
+                0,
+                0,
+                (int)pageData.Width,
+                (int)pageData.Height,
+                0,
+                left,
+                top,
+                out var deviceX1,
+                out var deviceY1
+            );
+
+            NativeMethods.FPDF_PageToDevice(
+                pageData.Page,
+                0,
+                0,
+                (int)pageData.Width,
+                (int)pageData.Height,
+                0,
+                right,
+                bottom,
+                out var deviceX2,
+                out var deviceY2
+            );
+
+            return new RectangleF(
+                deviceX1,
+                deviceY1,
+                deviceX2 - deviceX1,
+                deviceY2 - deviceY1
+            );
         }
 
         public PointF PointToPdf(int page, Point point)
@@ -414,14 +489,15 @@ namespace PdfiumViewer.Core
             }
         }
 
-        private IList<PdfRectangle> GetTextBounds(IntPtr textPage, int page, int index, int matchLength)
+        private PdfRectangle GetTextBound(IntPtr textPage, PageData pageData, int page, int index, int matchLength)
         {
-            var result = new List<PdfRectangle>();
             var resultBound = new RectangleF();
             bool isFirst = true;
-            for (var i = 0; i < matchLength; i++)
+
+            var len = NativeMethods.FPDFText_CountRects(textPage, index, matchLength);
+            for (var i = 0; i < len; i++)
             {
-                var bounds = GetBounds(textPage, index + i);
+                var bounds = GetBounds(textPage, pageData, i);
 
                 if (bounds.Width == 0 || bounds.Height == 0)
                     continue;
@@ -440,8 +516,7 @@ namespace PdfiumViewer.Core
                     resultBound.Width += bounds.Width;
                 }
             }
-            result.Add(new PdfRectangle(page, resultBound));
-            return result;
+            return new PdfRectangle(page, resultBound);
         }
 
         private bool AreClose(float p1, float p2)
@@ -449,23 +524,11 @@ namespace PdfiumViewer.Core
             return Math.Abs(p1 - p2) < 4f;
         }
 
-        private RectangleF GetBounds(IntPtr textPage, int index)
+        private RectangleF GetBounds(IntPtr textPage, PageData page, int index)
         {
-            NativeMethods.FPDFText_GetCharBox(
-                textPage,
-                index,
-                out var left,
-                out var right,
-                out var bottom,
-                out var top
-            );
+            NativeMethods.FPDFText_GetRect(textPage, index, out var left, out var top, out var right, out var bottom);
 
-            return new RectangleF(
-                (float)left,
-                (float)Math.Min(top, bottom),
-                Math.Abs((float)(right - left)),
-                Math.Abs((float)(bottom - top))
-            );
+            return RectangleFromPdf(page, left, top, right, bottom);
         }
 
         public string GetPdfText(int page)

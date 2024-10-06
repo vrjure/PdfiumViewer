@@ -107,7 +107,20 @@ namespace PdfiumViewer.Demo.ViewModels
         public bool IsSearchOpen
         {
             get => _isSearchOpen;
-            set => SetProperty(ref _isSearchOpen, value);
+            set
+            {
+                if(SetProperty(ref _isSearchOpen, value))
+                {
+                    if (!_isSearchOpen)
+                    {
+                        Matches = null;
+                    }
+                    else
+                    {
+                        Search();
+                    }
+                }
+            }
         }
 
         private bool _enableHandTools;

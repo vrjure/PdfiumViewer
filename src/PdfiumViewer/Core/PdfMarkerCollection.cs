@@ -45,7 +45,7 @@ namespace PdfiumViewer.Core
             var i = 0;
             foreach (var item in markers)
             {
-                Insert(Count, item);
+                base.InsertItem(Count, item);
                 i++;
             }
 

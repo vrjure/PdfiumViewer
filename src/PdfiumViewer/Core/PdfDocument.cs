@@ -422,9 +422,9 @@ namespace PdfiumViewer.Core
         /// </description>
         /// <param name="textSpan">The span to get the bounding rectangles for.</param>
         /// <returns>The bounding rectangles.</returns>
-        public IList<PdfRectangle> GetTextBounds(PdfTextSpan textSpan)
+        public PdfRectangle GetTextBound(PdfTextSpan textSpan)
         {
-            return _file.GetTextBounds(textSpan);
+            return _file.GetTextBound(textSpan);
         }
 
         /// <summary>
@@ -466,7 +466,7 @@ namespace PdfiumViewer.Core
         /// <param name="page">The page where the rectangle is from.</param>
         /// <param name="rect">The rectangle to convert.</param>
         /// <returns>The converted rectangle.</returns>
-        public Rectangle RectangleFromPdf(int page, RectangleF rect)
+        public RectangleF RectangleFromPdf(int page, RectangleF rect)
         {
             return _file.RectangleFromPdf(page, rect);
         }

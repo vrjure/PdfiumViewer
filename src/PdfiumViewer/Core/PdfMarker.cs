@@ -10,13 +10,17 @@ namespace PdfiumViewer.Core
     internal class PdfMarker : IPdfMarker
     {
         public int Page { get; }
-        public Rect[] Bounds { get; }
+        public Rect Bound { get; }
         public bool Current { get; set; }
-        public PdfMarker(int page, Rect[] bound, bool current)
+
+        public int MatchIndex { get; }
+
+        public PdfMarker(int page, int matchIndex, Rect bound, bool current)
         {
             Page = page;
-            Bounds = bound;
+            Bound = bound;
             this.Current = current;
+            MatchIndex = matchIndex;
         }
     }
 }

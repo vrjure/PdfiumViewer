@@ -118,9 +118,9 @@ namespace PdfiumViewer
             return Document?.GetPdfText(textSpan);
         }
 
-        public IList<PdfRectangle> GetTextBounds(PdfTextSpan textSpan)
+        public PdfRectangle? GetTextBounds(PdfTextSpan textSpan)
         {
-            return Document?.GetTextBounds(textSpan);
+            return Document?.GetTextBound(textSpan);
         }
 
         public PointF PointToPdf(int page, Point point)
@@ -138,7 +138,7 @@ namespace PdfiumViewer
             return Document.RectangleToPdf(page, rect);
         }
 
-        public Rectangle RectangleFromPdf(int page, RectangleF rect)
+        public RectangleF RectangleFromPdf(int page, RectangleF rect)
         {
             return Document.RectangleFromPdf(page, rect);
         }

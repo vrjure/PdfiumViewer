@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -91,35 +92,9 @@ namespace PdfiumViewer
             set => SetValue(HighlightAllMatchesProperty, value);
         }
 
-        private void OnMatchesChanged(PdfMatches matches)
+        private void OnMatchesChanged()
         {
-            Markers ??= new PdfMarkerCollection();
-            Markers?.Clear();
-
-            if (matches == null || matches.Items == null || matches.Items.Count == 0 || Document == null)
-            {
-                Markers?.Clear();
-            }
-            else
-            {
-
-                if (HighlightAllMatches)
-                {
-                    var list = new List<PdfMarker>();
-                    for (int i = 0; i < matches.Items.Count; i++)
-                    {
-                        var item = matches.Items[i];
-                        list.Add(ToMarker(item, i == MatchIndex));
-                    }
-
-                    Markers.AddRange(list);
-                }
-                else if (MatchIndex >= 0 && MatchIndex < matches.Items.Count)
-                {
-                    var marker = ToMarker(matches.Items[MatchIndex], true);
-                    Markers.Add(marker);
-                }
-            }
+            RenderMarkers();
 
             if (Markers.Count > 0)
             {
@@ -127,54 +102,80 @@ namespace PdfiumViewer
             }
         }
 
-        private PdfMarker ToMarker(PdfMatch item, bool current)
+        private void RenderMarkers()
         {
-            var textBounds = Document.GetTextBounds(item.TextSpan);
+            Markers ??= new PdfMarkerCollection();
+            Markers?.Clear();
 
-            var rects = new Rect[textBounds.Count];
-
-            for (int i = 0; i < textBounds.Count; i++)
+            var matches = Matches;
+            if (matches == null || matches.Items == null || matches.Items.Count == 0 || Document == null)
             {
-                var bound = textBounds[i].Bounds;
-                rects[i] = new Rect(bound.Left, bound.Top, bound.Width, bound.Height);
+                Markers?.Clear();
             }
+            else
+            {
+                if (HighlightAllMatches)
+                {
+                    var list = new List<IPdfMarker>();
+                    for (int i = 0; i < matches.Items.Count; i++)
+                    {
+                        var item = matches.Items[i];
+                        if (item.Page < RenderStartIndex || item.Page > RenderEndIndex)
+                        {
+                            continue;
+                        }
+                        list.Add(ToMarker(item, i, i == MatchIndex));
+                    }
 
-            return new PdfMarker(item.Page, rects, current);
+                    Markers.AddRange(list);
+                }
+                else if (MatchIndex >= 0 && MatchIndex < matches.Items.Count)
+                {
+                    var marker = ToMarker(matches.Items[MatchIndex], MatchIndex, true);
+                    Markers.Add(marker);
+                }
+            }
+        }
+
+        private PdfMarker ToMarker(PdfMatch item, int matchIndex, bool current)
+        {
+            var bound = Document.GetTextBound(item.TextSpan).Bound;
+            return new PdfMarker(item.Page, matchIndex, new Rect(bound.Left, bound.Top, bound.Width, bound.Height), current);
         }
 
         private void OnMatchIndexChanged(int newIndex, int oldIndex)
         {
-            if (Matches?.Items == null)
+            if (Markers == null)
             {
                 return;
             }
 
             if (HighlightAllMatches)
             {
-                if (oldIndex >= 0 && oldIndex < Matches.Items.Count)
+                for (int i = 0; i < Markers.Count; i++)
                 {
-                    var marker = Markers[oldIndex];
-                    marker.Current = false;
-                    Markers[oldIndex] = marker;
-                }
-
-                if (newIndex >= 0 && newIndex < Matches.Items.Count)
-                {
-                    var marker = Markers[newIndex];
-                    marker.Current = true;
-                    Markers[newIndex] = marker;
-                    SetCurrentValue(PageProperty, marker.Page);
+                    var marker = Markers[i];
+                    if (marker.MatchIndex == newIndex)
+                    {
+                        marker.Current = true;
+                        Markers[i] = marker;
+                    }
+                    else if (marker.MatchIndex == oldIndex)
+                    {
+                        marker.Current = false;
+                        Markers[i] = marker;
+                    }
                 }
             }
-            else
+            else if (Markers.Count > 0 && newIndex >= 0 && newIndex < Matches.Items.Count)
             {
-                if (newIndex >= 0 && newIndex < Matches.Items.Count)
-                {
-                    Markers[0] = ToMarker(Matches.Items[newIndex], true);
-                    SetCurrentValue(PageProperty, Markers[0].Page);
-                }
+                Markers[0] = ToMarker(Matches.Items[newIndex], newIndex, true);
             }
 
+            if (Matches?.Items != null && newIndex >= 0 && newIndex < Matches.Items.Count)
+            {
+                SetCurrentValue(PageProperty, Matches.Items[newIndex].Page);
+            }
         }
     }
 }

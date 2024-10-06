@@ -43,5 +43,28 @@ namespace PdfiumViewer
         {
             OverlayLayer?.Children.RemoveRange(index, count);
         }
+
+        internal FrameworkElement GetMaker(int index)
+        {
+            if (index < OverlayLayer?.Children?.Count)
+            {
+                return OverlayLayer.Children[index] as FrameworkElement;
+            }
+
+            return null;
+        }
+
+        internal FrameworkElement FindMarker(Func<FrameworkElement, bool> predicate)
+        {
+            foreach (FrameworkElement item in OverlayLayer.Children)
+            {
+                if (predicate(item))
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
     }
 }

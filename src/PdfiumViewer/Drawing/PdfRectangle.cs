@@ -12,21 +12,21 @@ namespace PdfiumViewer.Drawing
 
         public int Page => _page - 1;
 
-        public RectangleF Bounds { get; }
+        public RectangleF Bound { get; }
 
         public bool IsValid => _page != 0;
 
         public PdfRectangle(int page, RectangleF bounds)
         {
             _page = page + 1;
-            Bounds = bounds;
+            Bound = bounds;
         }
 
         public bool Equals(PdfRectangle other)
         {
             return
                 Page == other.Page &&
-                Bounds == other.Bounds;
+                Bound == other.Bound;
         }
 
         public override bool Equals(object obj)
@@ -40,7 +40,7 @@ namespace PdfiumViewer.Drawing
         {
             unchecked
             {
-                return (Page * 397) ^ Bounds.GetHashCode();
+                return (Page * 397) ^ Bound.GetHashCode();
             }
         }
 

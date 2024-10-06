@@ -296,6 +296,22 @@ namespace PdfiumViewer.Core
             }
         }
 
+        public static int FPDFText_CountRects(IntPtr page, int start_index, int count)
+        {
+            lock (LockString)
+            {
+                return Imports.FPDFText_CountRects(page, start_index, count);
+            }
+        }
+
+        public static void FPDFText_GetRect(IntPtr page, int rect_index, out double left, out double top, out double right, out double bottom)
+        {
+            lock (LockString)
+            {
+                Imports.FPDFText_GetRect(page, rect_index, out left, out top, out right, out bottom);
+            }
+        }
+
         public static bool FPDFText_FindNext(IntPtr handle)
         {
             lock (LockString)
@@ -328,11 +344,11 @@ namespace PdfiumViewer.Core
             }
         }
 
-        public static uint FPDFDest_GetPageIndex(IntPtr document, IntPtr dest)
+        public static uint FPDFDest_GetDestPageIndex(IntPtr document, IntPtr dest)
         {
             lock (LockString)
             {
-                return Imports.FPDFDest_GetPageIndex(document, dest);
+                return Imports.FPDFDest_GetDestPageIndex(document, dest);
             }
         }
 
@@ -695,6 +711,12 @@ namespace PdfiumViewer.Core
             public static extern void FPDFText_GetCharBox(IntPtr page, int index, out double left, out double right, out double bottom, out double top);
 
             [DllImport("pdfium.dll")]
+            public static extern int FPDFText_CountRects(IntPtr page, int start_index, int count);
+
+            [DllImport("pdfium.dll")]
+            public static extern void FPDFText_GetRect(IntPtr page, int rect_index, out double left, out double top, out double right, out double bottom);
+
+            [DllImport("pdfium.dll")]
             public static extern int FPDFText_CountChars(IntPtr page);
 
             [DllImport("pdfium.dll")]
@@ -710,7 +732,7 @@ namespace PdfiumViewer.Core
             public static extern IntPtr FPDFLink_GetDest(IntPtr document, IntPtr link);
 
             [DllImport("pdfium.dll")]
-            public static extern uint FPDFDest_GetPageIndex(IntPtr document, IntPtr dest);
+            public static extern uint FPDFDest_GetDestPageIndex(IntPtr document, IntPtr dest);
 
             [DllImport("pdfium.dll")]
             public static extern bool FPDFLink_GetAnnotRect(IntPtr linkAnnot, FS_RECTF rect);

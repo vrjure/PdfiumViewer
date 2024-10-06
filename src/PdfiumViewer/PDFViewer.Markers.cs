@@ -35,8 +35,6 @@ namespace PdfiumViewer
             }
         }
 
-        private Dictionary<IPdfMarker, Rectangle[]> _markerElements;
-
         private void _markers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             switch (e.Action)
@@ -62,14 +60,11 @@ namespace PdfiumViewer
 
         private void OnMarkersChanged(IList newMarkers = null, IList oldMarkers = null)
         {
-            _markerElements ??= new Dictionary<IPdfMarker, Rectangle[]>();
-
             OnMarkersRemoved(oldMarkers);
 
             if (newMarkers == null || newMarkers.Count == 0)
             {
-                _markerElements.Clear();
-                for (int i = _renderStartIndex; i <= _renderEndIndex; i++)
+                for (int i = RenderStartIndex; i <= RenderEndIndex; i++)
                 {
                     var container = GetContainerFormItem(Items[i] as FrameworkElement);
                     container.ClearMarker();
@@ -87,13 +82,10 @@ namespace PdfiumViewer
         {
             if (markers == null || markers.Count == 0) return;
 
-            _markerElements ??= new Dictionary<IPdfMarker, Rectangle[]>();
-
-            foreach (IPdfMarker item in markers)
+            foreach (IPdfMarker marker in markers)
             {
-                RemoveMarkder(item);
-            }
-            
+                RemoveMarkder(marker);
+            }           
         }
 
         private void ApplyMarker(IPdfMarker marker)
@@ -101,11 +93,6 @@ namespace PdfiumViewer
             if (marker == null)
             {
                 return;
-            }
-            if (!_markerElements.TryGetValue(marker, out Rectangle[] rects))
-            {
-                rects = new Rectangle[marker.Bounds.Length];
-                _markerElements.Add(marker, rects);
             }
 
             var fill = MatchBrush;
@@ -121,27 +108,25 @@ namespace PdfiumViewer
 
             var container = GetContainerFormItem(Items[marker.Page] as FrameworkElement);
 
-            for (int i = 0; i < marker.Bounds.Length; i++)
+            var bound = marker.Bound;
+            var rect = container.FindMarker(f=> (f.Tag as IPdfMarker)?.MatchIndex == marker.MatchIndex) as Rectangle;
+            if (rect == null)
             {
-                var bound = marker.Bounds[i];
-                var rect = rects[i];
-                if (rect == null)
-                {
-                    rect = new Rectangle();
-                    rects[i] = rect;
-                    container.AddMarker(rect);
-                }
+                rect = new Rectangle();
+                rect.Opacity = 0.35;
+                rect.Tag = marker;
 
-                rect.Width = bound.Width * Zoom;
-                rect.Height = bound.Height * Zoom;
-                rect.Fill = fill;
-                rect.Stroke = border;
-                rect.StrokeThickness = borderThickness;
-                rect.Opacity = 0.5;
-                
-                Canvas.SetLeft(rect, bound.Left * Zoom);
-                Canvas.SetTop(rect, bound.Top * Zoom);
+                container.AddMarker(rect);
             }
+
+            rect.Fill = fill;
+            rect.Stroke = border;
+            rect.StrokeThickness = borderThickness;
+
+            rect.Width = bound.Width * Zoom;
+            rect.Height = bound.Height * Zoom;
+            Canvas.SetLeft(rect, bound.Left * Zoom);
+            Canvas.SetTop(rect, bound.Top * Zoom);
         }
 
         private void RemoveMarkder(IPdfMarker marker)
@@ -151,11 +136,8 @@ namespace PdfiumViewer
                 return;
             }
             var container = GetContainerFormItem(Items[marker.Page] as FrameworkElement);
-            if (_markerElements.TryGetValue(marker, out Rectangle[] rects))
-            {
-                container.ClearMarker();
-                _markerElements.Remove(marker);
-            }
+            var rect = container.FindMarker(f => (f.Tag as IPdfMarker)?.MatchIndex == marker.MatchIndex);
+            container.RemoveMarker(rect);
         }
 
         private PDFViewerItemContainer GetContainerFormItem(FrameworkElement element)
