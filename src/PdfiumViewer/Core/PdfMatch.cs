@@ -8,7 +8,8 @@ namespace PdfiumViewer.Core
         public PdfTextSpan TextSpan { get; }
         public int Page { get; }
 
-        public PdfMatch(string text, PdfTextSpan textSpan, int page)
+        private PdfMatch() { }
+        internal PdfMatch(string text, PdfTextSpan textSpan, int page)
         {
             Text = text;
             TextSpan = textSpan;

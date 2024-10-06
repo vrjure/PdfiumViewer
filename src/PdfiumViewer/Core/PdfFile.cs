@@ -417,41 +417,30 @@ namespace PdfiumViewer.Core
         private IList<PdfRectangle> GetTextBounds(IntPtr textPage, int page, int index, int matchLength)
         {
             var result = new List<PdfRectangle>();
-            RectangleF? lastBounds = null;
-
+            var resultBound = new RectangleF();
+            bool isFirst = true;
             for (var i = 0; i < matchLength; i++)
             {
                 var bounds = GetBounds(textPage, index + i);
 
                 if (bounds.Width == 0 || bounds.Height == 0)
                     continue;
-
-                if (
-                    lastBounds.HasValue &&
-                    AreClose(lastBounds.Value.Right, bounds.Left) &&
-                    AreClose(lastBounds.Value.Top, bounds.Top) &&
-                    AreClose(lastBounds.Value.Bottom, bounds.Bottom)
-                )
+                if (isFirst)
                 {
-                    var top = Math.Max(lastBounds.Value.Top, bounds.Top);
-                    var bottom = Math.Min(lastBounds.Value.Bottom, bounds.Bottom);
-
-                    lastBounds = new RectangleF(
-                        lastBounds.Value.Left,
-                        top,
-                        bounds.Right - lastBounds.Value.Left,
-                        bottom - top
-                    );
-
-                    result[result.Count - 1] = new PdfRectangle(page, lastBounds.Value);
+                    isFirst = false;
+                    resultBound.X = bounds.X;
+                    resultBound.Y = bounds.Y;
+                    resultBound.Width = bounds.Width;
+                    resultBound.Height = bounds.Height;
                 }
                 else
                 {
-                    lastBounds = bounds;
-                    result.Add(new PdfRectangle(page, bounds));
+                    resultBound.Y = Math.Min(resultBound.Y, bounds.Y);
+                    resultBound.Height = Math.Max(resultBound.Height, bounds.Height);
+                    resultBound.Width += bounds.Width;
                 }
             }
-
+            result.Add(new PdfRectangle(page, resultBound));
             return result;
         }
 
@@ -473,9 +462,9 @@ namespace PdfiumViewer.Core
 
             return new RectangleF(
                 (float)left,
-                (float)top,
-                (float)(right - left),
-                (float)(bottom - top)
+                (float)Math.Min(top, bottom),
+                Math.Abs((float)(right - left)),
+                Math.Abs((float)(bottom - top))
             );
         }
 

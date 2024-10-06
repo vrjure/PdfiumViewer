@@ -1,4 +1,5 @@
-﻿using System.Windows.Media;
+﻿using System.Windows;
+using System.Windows.Media;
 
 namespace PdfiumViewer.Core
 {
@@ -11,12 +12,7 @@ namespace PdfiumViewer.Core
         /// The page where the marker is drawn on.
         /// </summary>
         int Page { get; }
-
-        /// <summary>
-        /// Draw the marker.
-        /// </summary>
-        /// <param name="renderer">The PdfRenderer to draw the marker with.</param>
-        /// <param name="graphics">The Graphics to draw the marker with.</param>
-        void Draw(PdfRenderer renderer, DrawingContext graphics);
+        Rect[] Bounds { get; }
+        bool Current { get; set; }
     }
 }

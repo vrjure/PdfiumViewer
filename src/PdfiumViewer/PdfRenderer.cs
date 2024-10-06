@@ -165,11 +165,6 @@ namespace PdfiumViewer
             FrameSpace = new Thickness(5);
 
             Markers = new PdfMarkerCollection();
-
-            this.Loaded += (s, e) =>
-            {
-                SearchManager = new PdfSearchManager(this);
-            };
         }
 
         public event EventHandler<int> PageChanged;

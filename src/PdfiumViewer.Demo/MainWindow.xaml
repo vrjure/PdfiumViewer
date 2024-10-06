@@ -66,15 +66,16 @@
                     </TreeView>
                 </Border>
             </Popup>
-            <!--<Button x:Name="BtnSearch" ToolTip="Search term"
+            
+            <Button x:Name="BtnSearch" ToolTip="Search term"
                     Command="{Binding SearchOpenCloseCommand}">
                 <Image Source="Resources/find.png" />
             </Button>
             <ToggleButton x:Name="BtnHand" ToolTip="Hand Tool"
                           IsChecked="{Binding EnableHandTools, Mode=TwoWay}">
                 <Image Source="Resources/hand_cursor.png" />
-            </ToggleButton>-->
-            <!--<Popup IsOpen="{Binding IsSearchOpen, Mode=TwoWay}" 
+            </ToggleButton>
+            <Popup IsOpen="{Binding IsSearchOpen, Mode=TwoWay}" 
                    Placement="Bottom"
                    PlacementRectangle="0,20,0,20"
                    PlacementTarget = "{Binding ElementName=BtnSearch}"
@@ -90,9 +91,8 @@
                             <TextBox x:Name="SearchTermTextBox" Height="30" Width="140"  
                                      VerticalAlignment="Center" VerticalContentAlignment="Center" 
                                      HorizontalAlignment="Left"  Margin="5"
-                                     Text="{Binding SearchText, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"
-                                     KeyDown="OnSearchTermKeyDown"/>
-                            <TextBlock IsHitTestVisible="False" Width="140" Text="Find in document..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" Foreground="DarkGray">
+                                     Text="{Binding SearchText, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Width="140" Text="Find in document..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" Foreground="DarkGray">
                                 <TextBlock.Style>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -116,16 +116,17 @@
                         <CheckBox Name="MatchCaseCheckBox" VerticalContentAlignment="Center" Margin="5" IsChecked="{Binding MatchCase, Mode=TwoWay}">Match case</CheckBox>
                         <CheckBox Name="WholeWordOnlyCheckBox" VerticalContentAlignment="Center" Margin="5" IsChecked="{Binding WholeWordOnly, Mode=TwoWay}">Match Whole words</CheckBox>
                         <CheckBox Name="HighlightAllMatchesCheckBox" VerticalContentAlignment="Center" Margin="5" IsChecked="{Binding HighlightAllMatches, Mode=TwoWay}">Highlight All Matches</CheckBox>
-                        <TextBlock x:Name="SearchMatchesTextBlock" Background="LightCyan" Visibility="Collapsed" 
+                        <TextBlock x:Name="SearchMatchesTextBlock" Background="LightCyan" Visibility="Visible" 
                                    VerticalAlignment="Center" Margin="5" Padding="10">
-                            <Run Text="{Binding SearchMatchItemNo, Mode=OneWay}" />
+                            <Run Text="{Binding MatchIndex}" />
                             <Run Text=" of " />
-                            <Run Text="{Binding SearchMatchesCount, Mode=OneWay}" />
+                            <Run Text="{Binding MatchCount}" />
                             <Run Text=" matches" />
                         </TextBlock>
                     </StackPanel>
                 </Border>
-            </Popup>-->
+            </Popup>
+            
             <!--<GridSplitter Background="Gray" Width="1" Margin="5,0"/>
             <Button ToolTip="Is right to left document"
                     Command="{Binding ToRtlCommand}"
@@ -237,13 +238,16 @@
         </ToolBar>
 
         <pdfiumViewer:PDFViewer Grid.Row="1" Grid.Column="0" Name="Renderer" Padding="10"
-                                  Source="{Binding PdfPath}"
-                                  Document="{Binding Document, Mode=TwoWay}"
-                                  Page="{Binding Page, Mode=TwoWay}"
-                                  PageCount="{Binding PageCount, Mode=OneWayToSource}"
-                                  Zoom="{Binding Zoom, Mode=TwoWay}"
+                                Source="{Binding PdfPath}"
+                                Document="{Binding Document, Mode=TwoWay}"
+                                Page="{Binding Page, Mode=TwoWay}"
+                                PageCount="{Binding PageCount, Mode=OneWayToSource}"
+                                Zoom="{Binding Zoom, Mode=TwoWay}"
                                 ZoomMax="{Binding ZoomMax}"
-                                ZoomMin="{Binding ZoomMin}"/>
+                                ZoomMin="{Binding ZoomMin}"
+                                HighlightAllMatches="{Binding HighlightAllMatches}"
+                                Matches="{Binding Matches}"
+                                MatchIndex="{Binding MatchIndex}"/>
 
         <!--<StatusBar Grid.Row="2" Grid.Column="0">
             <StatusBarItem Content="Page:" />

@@ -14,14 +14,7 @@ namespace PdfiumViewer
 {
     partial class PdfRenderer
     {
-        public static readonly DependencyProperty SearchManagerProperty = DependencyProperty.Register(nameof(SearchManager), typeof(PdfSearchManager), typeof(PdfRenderer), new PropertyMetadata(null, PropertyChanged));
-
         public PdfMarkerCollection Markers { get; }
-        public PdfSearchManager SearchManager
-        {
-            get => (PdfSearchManager)GetValue(SearchManagerProperty);
-            set => SetValue(SearchManagerProperty, value);
-        }
 
         private List<IPdfMarker>[] _markers;
 
@@ -184,17 +177,17 @@ namespace PdfiumViewer
 
         private void DrawMarkers(DrawingContext graphics, int page)
         {
-            if (_markers?.Length > 0 && _markers.Length > page)
-            {
-                var markers = _markers[page];
-                if (markers == null)
-                    return;
+            //if (_markers?.Length > 0 && _markers.Length > page)
+            //{
+            //    var markers = _markers[page];
+            //    if (markers == null)
+            //        return;
 
-                foreach (var marker in markers)
-                {
-                    marker.Draw(this, graphics);
-                }
-            }
+            //    foreach (var marker in markers)
+            //    {
+            //        marker.Draw(this, graphics);
+            //    }
+            //}
         }
 
 

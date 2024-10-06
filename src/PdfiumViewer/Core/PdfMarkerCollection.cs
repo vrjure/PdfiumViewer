@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 
 namespace PdfiumViewer.Core
 {
@@ -31,9 +34,25 @@ namespace PdfiumViewer.Core
 
         protected override void SetItem(int index, IPdfMarker item)
         {
+            var old = this[index];
             base.SetItem(index, item);
+            
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, old, index));
+        }
 
-           CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, index));
+        public void AddRange(IEnumerable<IPdfMarker> markers)
+        {
+            var i = 0;
+            foreach (var item in markers)
+            {
+                Insert(Count, item);
+                i++;
+            }
+
+            if (i > 0)
+            {
+                CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, (markers as IList) ?? markers.ToList()));
+            }
         }
     }
 }

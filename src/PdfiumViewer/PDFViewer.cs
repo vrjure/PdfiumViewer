@@ -131,7 +131,7 @@ namespace PdfiumViewer
 
         protected override DependencyObject GetContainerForItemOverride()
         {
-            return new ContentControl();
+            return new PDFViewerItemContainer();
         }
 
         protected override bool IsItemItsOwnContainerOverride(object item)
@@ -182,6 +182,14 @@ namespace PdfiumViewer
             else if (e.Property == DpiProperty)
             {
                 v.Render(true);
+            }
+            else if (e.Property == HighlightAllMatchesProperty || e.Property == MatchesProperty)
+            {
+                v.OnMatchesChanged(e.NewValue as PdfMatches);
+            }
+            else if (e.Property == MatchIndexProperty)
+            {
+                v.OnMatchIndexChanged((int)e.NewValue, (int)e.OldValue);
             }
         }
 

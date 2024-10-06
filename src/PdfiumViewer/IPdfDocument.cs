@@ -121,25 +121,6 @@ namespace PdfiumViewer
         /// <param name="text">The text to search for.</param>
         /// <param name="matchCase">Whether to match case.</param>
         /// <param name="wholeWord">Whether to match whole words only.</param>
-        /// <returns>All matches.</returns>
-        PdfMatches Search(string text, bool matchCase, bool wholeWord);
-
-        /// <summary>
-        /// Finds all occurences of text.
-        /// </summary>
-        /// <param name="text">The text to search for.</param>
-        /// <param name="matchCase">Whether to match case.</param>
-        /// <param name="wholeWord">Whether to match whole words only.</param>
-        /// <param name="page">The page to search on.</param>
-        /// <returns>All matches.</returns>
-        PdfMatches Search(string text, bool matchCase, bool wholeWord, int page);
-
-        /// <summary>
-        /// Finds all occurences of text.
-        /// </summary>
-        /// <param name="text">The text to search for.</param>
-        /// <param name="matchCase">Whether to match case.</param>
-        /// <param name="wholeWord">Whether to match whole words only.</param>
         /// <param name="startPage">The page to start searching.</param>
         /// <param name="endPage">The page to end searching.</param>
         /// <returns>All matches.</returns>

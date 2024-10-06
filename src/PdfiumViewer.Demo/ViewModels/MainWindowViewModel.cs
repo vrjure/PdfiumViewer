@@ -56,12 +56,12 @@ namespace PdfiumViewer.Demo.ViewModels
         private ICommand _rotateRightCommand;
         public ICommand RotateRightCommand => _rotateRightCommand ??= new RelayCommand(ClockwiseRotate);
 
-        //private ICommand _prevFoundCommand;
-        //public ICommand PrevFoundCommand => _prevFoundCommand ??= new RelayCommand(OnPrevFoundClick);
+        private ICommand _prevFoundCommand;
+        public ICommand PrevFoundCommand => _prevFoundCommand ??= new RelayCommand(() => MatchIndex = Math.Max(0, MatchIndex - 1));
 
-        //private ICommand _nextFoundCommand;
-        //public ICommand NextFoundCommad => _nextFoundCommand ??= new RelayCommand(OnNextFoundClick);
-        
+        private ICommand _nextFoundCommand;
+        public ICommand NextFoundCommand => _nextFoundCommand ??= new RelayCommand(() => MatchIndex = Math.Min(MatchCount - 1, MatchIndex + 1));
+
         private string _pdfPath;
         public string PdfPath
         {
@@ -117,33 +117,31 @@ namespace PdfiumViewer.Demo.ViewModels
             set => SetProperty(ref _enableHandTools, value);
         }
 
-        //private PdfSearchManager _searchManager;
-        //public PdfSearchManager SearchManager
-        //{
-        //    get => _searchManager;
-        //    set => SetProperty(ref _searchManager, value);
-        //}
-
-
         private string _searchText;
         public string SearchText
         {
             get => _searchText;
-            set => SetProperty(ref _searchText, value);
+            set
+            {
+                if(SetProperty(ref _searchText, value))
+                {
+                    Search();
+                }
+            }
         }
 
-        private int _searchMatchItemNo;
-        public int SearchMatchItemNo
+        private int _matchIndex;
+        public int MatchIndex
         {
-            get => _searchMatchItemNo;
-            set => SetProperty(ref _searchMatchItemNo, value);
+            get => _matchIndex;
+            set => SetProperty(ref _matchIndex, value);
         }
 
-        private int _searchMathcsCount;
-        public int SearchMatchesCount
+        private int _matchCount;
+        public int MatchCount
         {
-            get => _searchMathcsCount;
-            set => SetProperty(ref _searchMathcsCount, value);
+            get => _matchCount;
+            set => SetProperty(ref _matchCount, value);
         }
 
 
@@ -161,11 +159,18 @@ namespace PdfiumViewer.Demo.ViewModels
             set => SetProperty(ref _wholeWordOnly, value);
         }
 
-        private bool _highlightAllMatches;
+        private bool _highlightAllMatches = false;
         public bool HighlightAllMatches
         {
             get => _highlightAllMatches;
             set => SetProperty(ref _highlightAllMatches, value);
+        }
+
+        private PdfMatches _matches;
+        public PdfMatches Matches
+        {
+            get => _matches;
+            set => SetProperty(ref _matches, value);
         }
 
         private bool _isRtl;
@@ -303,45 +308,29 @@ namespace PdfiumViewer.Demo.ViewModels
             Page = SelectedBookMark.PageIndex;
         }
 
-        //public void Search()
-        //{
-        //    SearchMatchItemNo = 0;
-        //    SearchManager.MatchCase = MatchCase;
-        //    SearchManager.MatchWholeWord = WholeWordOnly;
-        //    SearchManager.HighlightAllMatches = HighlightAllMatches;
+        public void Search()
+        {
+            if (Document == null)
+            {
+                return;
+            }
+            if (string.IsNullOrEmpty(SearchText))
+            {
+                Matches = null;
+            }
 
-        //    if (!SearchManager.Search(SearchText))
-        //    {
-        //        MessageBox.Show("No matches found.");
-        //    }
-        //    else
-        //    {
-        //        SearchMatchesCount = SearchManager.MatchesCount;
-        //        // DisplayTextSpan(SearchMatches.Items[SearchMatchItemNo++].TextSpan);
-        //    }
-
-        //    if (!SearchManager.FindNext(true))
-        //        MessageBox.Show( "Find reached the starting point of the search.");
-        //}
-        //private void OnNextFoundClick()
-        //{
-        //    if (SearchMatchesCount > SearchMatchItemNo)
-        //    {
-        //        SearchMatchItemNo++;
-        //        //DisplayTextSpan(SearchMatches.Items[SearchMatchItemNo - 1].TextSpan);
-        //        SearchManager.FindNext(true);
-        //    }
-        //}
-
-        //private void OnPrevFoundClick()
-        //{
-        //    if (SearchMatchItemNo > 1)
-        //    {
-        //        SearchMatchItemNo--;
-        //        // DisplayTextSpan(SearchMatches.Items[SearchMatchItemNo - 1].TextSpan);
-        //        SearchManager.FindNext(false);
-        //    }
-        //}
+            Matches = Document.Search(SearchText, MatchCase, WholeWordOnly, 0, PageCount);
+            MatchIndex = 0;
+            if (Matches == null || Matches.Items == null || Matches.Items.Count == 0)
+            {
+                MatchCount = 0;
+                return;
+            }
+            else
+            {
+                MatchCount = Matches.Items.Count;
+            }
+        }
 
 
         public void ClockwiseRotate()

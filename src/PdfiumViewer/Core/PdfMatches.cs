@@ -13,8 +13,8 @@ namespace PdfiumViewer.Core
         public int EndPage { get; private set; }
 
         public IList<PdfMatch> Items { get; private set; }
-
-        public PdfMatches(int startPage, int endPage, IList<PdfMatch> matches)
+        private PdfMatches() { }
+        internal PdfMatches(int startPage, int endPage, IList<PdfMatch> matches)
         {
             if (matches == null)
                 throw new ArgumentNullException(nameof(matches));

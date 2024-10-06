@@ -63,5 +63,22 @@ namespace PdfiumViewer
 
             return value;
         }
+
+        private static object MatchIndexCoerceValueChanged(DependencyObject d, object value)
+        {
+            var v = d as PDFViewer;
+            var matchIndex = (int)value;
+            var total = v.Matches?.Items?.Count ?? 0;
+            if (matchIndex < 0)
+            {
+                return 0;
+            }
+            else if (matchIndex >= total)
+            {
+                return Math.Max(total - 1, 0);
+            }
+
+            return value;
+        }
     }
 }
