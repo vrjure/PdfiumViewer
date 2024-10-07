@@ -17,7 +17,6 @@
     </Style>
 
     <Style TargetType="pdf:PDFViewer">
-        <Setter Property="ItemContainerStyle" Value="{StaticResource {x:Type pdf:PDFViewerItemContainer}}"/>
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>

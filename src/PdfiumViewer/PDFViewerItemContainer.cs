@@ -12,6 +12,10 @@ namespace PdfiumViewer
     [TemplatePart(Name = "PART_OverlayLayer", Type = typeof(Canvas))]
     public class PDFViewerItemContainer : ContentControl
     {
+        static PDFViewerItemContainer()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(PDFViewerItemContainer), new FrameworkPropertyMetadata(typeof(PDFViewerItemContainer)));
+        }
         private Canvas _overlayLayer;
         private Canvas OverlayLayer
         {
