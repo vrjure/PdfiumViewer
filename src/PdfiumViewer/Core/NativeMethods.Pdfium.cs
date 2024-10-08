@@ -821,7 +821,6 @@ namespace PdfiumViewer.Core
 
             [DllImport("pdfium.dll")]
             public static extern void FPDF_FFLDraw(IntPtr form, IntPtr bitmap, IntPtr page, int start_x, int start_y, int size_x, int size_y, int rotate, FPDF flags);
-
             #endregion
         }
 
@@ -994,6 +993,14 @@ namespace PdfiumViewer.Core
             public int version;
             public IntPtr WriteBlock;
             public IntPtr stream;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public class FSCRT_BSTR
+        {
+            [MarshalAs(UnmanagedType.LPUTF8Str)]
+            public string str;
+            public int len;
         }
         #endregion
     }

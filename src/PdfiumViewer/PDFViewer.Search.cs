@@ -28,7 +28,7 @@ namespace PdfiumViewer
             set => SetValue(MatchIndexProperty, value);
         }
 
-        public static readonly DependencyProperty MatchBrushProperty = DependencyProperty.Register(nameof(MatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Yellow));
+        public static readonly DependencyProperty MatchBrushProperty = DependencyProperty.Register(nameof(MatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Yellow, PropertyChanged));
         /// <summary>
         /// Gets or sets the color of matched search terms.
         /// </summary>
@@ -38,7 +38,7 @@ namespace PdfiumViewer
             set => SetValue(PageCountProperty, value);
         }
 
-        public static readonly DependencyProperty MatchBorderBrushProperty = DependencyProperty.Register(nameof(MatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Yellow));
+        public static readonly DependencyProperty MatchBorderBrushProperty = DependencyProperty.Register(nameof(MatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Yellow, PropertyChanged));
         /// <summary>
         /// Gets or sets the border color of matched search terms.
         /// </summary>
@@ -48,14 +48,14 @@ namespace PdfiumViewer
             set => SetValue(MatchBorderBrushProperty, value);
         }
 
-        public static readonly DependencyProperty MatchBorderThicknessProperty = DependencyProperty.Register(nameof(MatchBorderThickness), typeof(double), typeof(PDFViewer), new PropertyMetadata(1d));
+        public static readonly DependencyProperty MatchBorderThicknessProperty = DependencyProperty.Register(nameof(MatchBorderThickness), typeof(double), typeof(PDFViewer), new PropertyMetadata(1d, PropertyChanged));
         public double MatchBorderThickness
         {
             get => (double)GetValue(MatchBorderThicknessProperty);
             set => SetValue(MatchBorderThicknessProperty, value);
         }
 
-        public static readonly DependencyProperty CurrentMatchBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Orange));
+        public static readonly DependencyProperty CurrentMatchBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Orange, PropertyChanged));
         /// <summary>
         /// Gets or sets the color of the current match.
         /// </summary>
@@ -65,7 +65,7 @@ namespace PdfiumViewer
             set => SetValue(CurrentMatchBrushProperty, value);
         }
 
-        public static readonly DependencyProperty CurrentMatchBorderBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Orange));
+        public static readonly DependencyProperty CurrentMatchBorderBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Orange, PropertyChanged));
         /// <summary>
         /// Gets or sets the border color of the current match.
         /// </summary>
@@ -75,7 +75,7 @@ namespace PdfiumViewer
             set => SetValue(CurrentMatchBorderBrushProperty, value);
         }
 
-        public static readonly DependencyProperty CurrentMatchBorderThicknessProperty = DependencyProperty.Register(nameof(CurrentMatchBorderThickness), typeof(double), typeof(PDFViewer), new PropertyMetadata(1d));
+        public static readonly DependencyProperty CurrentMatchBorderThicknessProperty = DependencyProperty.Register(nameof(CurrentMatchBorderThickness), typeof(double), typeof(PDFViewer), new PropertyMetadata(1d, PropertyChanged));
         /// <summary>
         /// Gets or sets the border width of the current match.
         /// </summary>
@@ -85,7 +85,7 @@ namespace PdfiumViewer
             set => SetValue(CurrentMatchBorderThicknessProperty, value);
         }
 
-        public static readonly DependencyProperty HighlightAllMatchesProperty = DependencyProperty.Register(nameof(HighlightAllMatches), typeof(bool), typeof(PDFViewer), new PropertyMetadata(true));
+        public static readonly DependencyProperty HighlightAllMatchesProperty = DependencyProperty.Register(nameof(HighlightAllMatches), typeof(bool), typeof(PDFViewer), new PropertyMetadata(false, PropertyChanged));
         public bool HighlightAllMatches
         {
             get => (bool)GetValue(HighlightAllMatchesProperty);
@@ -139,8 +139,14 @@ namespace PdfiumViewer
 
         private PdfMarker ToMarker(PdfMatch item, int matchIndex, bool current)
         {
-            var bound = Document.GetTextBound(item.TextSpan).Bound;
-            return new PdfMarker(item.Page, matchIndex, new Rect(bound.Left, bound.Top, bound.Width, bound.Height), current);
+            var bounds = Document.GetTextBounds(item.TextSpan);
+            var rects = new Rect[bounds.Count];
+            for (int i = 0; i < bounds.Count; i++)
+            {
+                var bound = bounds[i].Bound;
+                rects[i] = new Rect(bound.Left, bound.Top, bound.Width, bound.Height);
+            }
+            return new PdfMatchMarker(item.Page, matchIndex, rects, current);
         }
 
         private void OnMatchIndexChanged(int newIndex, int oldIndex)
@@ -155,14 +161,20 @@ namespace PdfiumViewer
                 for (int i = 0; i < Markers.Count; i++)
                 {
                     var marker = Markers[i];
-                    if (marker.MatchIndex == newIndex)
+                    if (marker is not PdfMatchMarker)
                     {
-                        marker.Current = true;
+                        continue;
+                    }
+
+                    var matchMarker = (PdfMatchMarker)marker;
+                    if (matchMarker.MatchIndex == newIndex)
+                    {
+                        matchMarker.Current = true;
                         Markers[i] = marker;
                     }
-                    else if (marker.MatchIndex == oldIndex)
+                    else if (matchMarker.MatchIndex == oldIndex)
                     {
-                        marker.Current = false;
+                        matchMarker.Current = false;
                         Markers[i] = marker;
                     }
                 }

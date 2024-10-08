@@ -146,7 +146,14 @@ namespace PdfiumViewer
 
         protected override DependencyObject GetContainerForItemOverride()
         {
-            return new PDFViewerItemContainer();
+            var container = new PDFViewerItemContainer();
+            container.PreviewMouseDown -= Container_PreviewMouseDown;
+            container.PreviewMouseDown += Container_PreviewMouseDown;
+
+            container.PreviewMouseMove -= Container_PreviewMouseMove;
+            container.PreviewMouseMove += Container_PreviewMouseMove;
+
+            return container;
         }
 
         protected override bool IsItemItsOwnContainerOverride(object item)
@@ -198,7 +205,7 @@ namespace PdfiumViewer
             {
                 v.Render(true);
             }
-            else if (e.Property == HighlightAllMatchesProperty || e.Property == MatchesProperty)
+            else if (e.Property == MatchesProperty || e.Property == HighlightAllMatchesProperty)
             {
                 v.OnMatchesChanged();
             }
@@ -206,7 +213,9 @@ namespace PdfiumViewer
             {
                 v.OnMatchIndexChanged((int)e.NewValue, (int)e.OldValue);
             }
-            else if (e.Property == RenderStartIndexProperty || e.Property == RenderEndIndexProperty)
+            else if (e.Property == RenderStartIndexProperty || e.Property == RenderEndIndexProperty 
+                || e.Property == MatchBrushProperty || e.Property == MatchBorderBrushProperty || e.Property == MatchBorderThicknessProperty
+                || e.Property == CurrentMatchBrushProperty || e.Property == CurrentMatchBorderBrushProperty || e.Property == CurrentMatchBorderThicknessProperty)
             {
                 v.RenderMarkers();
             }

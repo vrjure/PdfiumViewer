@@ -286,11 +286,11 @@ namespace PdfiumViewer.Core
             return new PdfMatches(startPage, endPage, matches);
         }
 
-        public PdfRectangle GetTextBound(PdfTextSpan textSpan)
+        public IList<PdfRectangle> GetTextBounds(PdfTextSpan textSpan)
         {
             using (var pageData = new PageData(_document, _form, textSpan.Page))
             {
-                return GetTextBound(pageData.TextPage, pageData, textSpan.Page, textSpan.Offset, textSpan.Length);
+                return GetTextBounds(pageData.TextPage, pageData, textSpan.Page, textSpan.Offset, textSpan.Length);
             }
         }
 
@@ -489,34 +489,52 @@ namespace PdfiumViewer.Core
             }
         }
 
-        private PdfRectangle GetTextBound(IntPtr textPage, PageData pageData, int page, int index, int matchLength)
+        private IList<PdfRectangle> GetTextBounds(IntPtr textPage, PageData pageData, int page, int index, int matchLength)
         {
-            var resultBound = new RectangleF();
+            var resultBounds = new List<PdfRectangle>();
+            var lastBound = new RectangleF();
             bool isFirst = true;
 
             var len = NativeMethods.FPDFText_CountRects(textPage, index, matchLength);
             for (var i = 0; i < len; i++)
             {
-                var bounds = GetBounds(textPage, pageData, i);
+                var bound = GetBound(textPage, pageData, i);
 
-                if (bounds.Width == 0 || bounds.Height == 0)
+                if (bound.Width == 0 || bound.Height == 0)
                     continue;
                 if (isFirst)
                 {
                     isFirst = false;
-                    resultBound.X = bounds.X;
-                    resultBound.Y = bounds.Y;
-                    resultBound.Width = bounds.Width;
-                    resultBound.Height = bounds.Height;
+                    lastBound.X = bound.X;
+                    lastBound.Y = bound.Y;
+                    lastBound.Width = bound.Width;
+                    lastBound.Height = bound.Height;
                 }
                 else
                 {
-                    resultBound.Y = Math.Min(resultBound.Y, bounds.Y);
-                    resultBound.Height = Math.Max(resultBound.Height, bounds.Height);
-                    resultBound.Width += bounds.Width;
+                    if (Math.Abs(bound.Y - lastBound.Y) >= lastBound.Height)
+                    {
+                        resultBounds.Add(new PdfRectangle(page, lastBound));
+                        lastBound = new RectangleF
+                        {
+                            X = bound.X,
+                            Y = bound.Y,
+                            Width = bound.Width,
+                            Height = bound.Height
+                        };
+                    }
+                    else
+                    {
+                        lastBound.Y = Math.Min(lastBound.Y, bound.Y);
+                        lastBound.Height = Math.Max(lastBound.Height, bound.Height);
+                        lastBound.Width += bound.Width;
+                    }
+
                 }
             }
-            return new PdfRectangle(page, resultBound);
+
+            resultBounds.Add(new PdfRectangle(page, lastBound));
+            return resultBounds;
         }
 
         private bool AreClose(float p1, float p2)
@@ -524,7 +542,7 @@ namespace PdfiumViewer.Core
             return Math.Abs(p1 - p2) < 4f;
         }
 
-        private RectangleF GetBounds(IntPtr textPage, PageData page, int index)
+        private RectangleF GetBound(IntPtr textPage, PageData page, int index)
         {
             NativeMethods.FPDFText_GetRect(textPage, index, out var left, out var top, out var right, out var bottom);
 

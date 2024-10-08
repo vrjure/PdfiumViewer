@@ -203,7 +203,7 @@ namespace PdfiumViewer
         /// </description>
         /// <param name="textSpan">The span to get the bounding rectangles for.</param>
         /// <returns>The bounding rectangles.</returns>
-        PdfRectangle GetTextBound(PdfTextSpan textSpan);
+        IList<PdfRectangle> GetTextBounds(PdfTextSpan textSpan);
 
         /// <summary>
         /// Convert a point from device coordinates to page coordinates.

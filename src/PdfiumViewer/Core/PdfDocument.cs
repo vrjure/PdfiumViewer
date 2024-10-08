@@ -422,9 +422,9 @@ namespace PdfiumViewer.Core
         /// </description>
         /// <param name="textSpan">The span to get the bounding rectangles for.</param>
         /// <returns>The bounding rectangles.</returns>
-        public PdfRectangle GetTextBound(PdfTextSpan textSpan)
+        public IList<PdfRectangle> GetTextBounds(PdfTextSpan textSpan)
         {
-            return _file.GetTextBound(textSpan);
+            return _file.GetTextBounds(textSpan);
         }
 
         /// <summary>

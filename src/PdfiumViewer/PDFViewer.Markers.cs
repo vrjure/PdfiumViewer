@@ -95,38 +95,23 @@ namespace PdfiumViewer
                 return;
             }
 
+            var container = GetContainerFormItem(Items[marker.Page] as FrameworkElement);
+
             var fill = MatchBrush;
             var border = MatchBorderBrush;
             var borderThickness = MatchBorderThickness;
 
-            if (marker.Current)
+            if (marker is PdfMatchMarker matchMarker)
             {
-                fill = CurrentMatchBrush;
-                border = CurrentMatchBorderBrush;
-                borderThickness = CurrentMatchBorderThickness;
+                if (matchMarker.Current)
+                {
+                    fill = CurrentMatchBrush;
+                    border = CurrentMatchBorderBrush;
+                    borderThickness = CurrentMatchBorderThickness;
+                }
             }
 
-            var container = GetContainerFormItem(Items[marker.Page] as FrameworkElement);
-
-            var bound = marker.Bound;
-            var rect = container.FindMarker(f=> (f.Tag as IPdfMarker)?.MatchIndex == marker.MatchIndex) as Rectangle;
-            if (rect == null)
-            {
-                rect = new Rectangle();
-                rect.Opacity = 0.35;
-                rect.Tag = marker;
-
-                container.AddMarker(rect);
-            }
-
-            rect.Fill = fill;
-            rect.Stroke = border;
-            rect.StrokeThickness = borderThickness;
-
-            rect.Width = bound.Width * Zoom;
-            rect.Height = bound.Height * Zoom;
-            Canvas.SetLeft(rect, bound.Left * Zoom);
-            Canvas.SetTop(rect, bound.Top * Zoom);
+            container.AddOrUpdateMarker(marker, Zoom, fill, border, borderThickness);
         }
 
         private void RemoveMarkder(IPdfMarker marker)
@@ -135,9 +120,10 @@ namespace PdfiumViewer
             {
                 return;
             }
+
             var container = GetContainerFormItem(Items[marker.Page] as FrameworkElement);
-            var rect = container.FindMarker(f => (f.Tag as IPdfMarker)?.MatchIndex == marker.MatchIndex);
-            container.RemoveMarker(rect);
+
+            container.RemoveMarker(marker);
         }
 
         private PDFViewerItemContainer GetContainerFormItem(FrameworkElement element)
