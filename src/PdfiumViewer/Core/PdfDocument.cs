@@ -21,8 +21,6 @@ namespace PdfiumViewer.Core
     {
         private bool _disposed;
         private PdfFile _file;
-        private readonly List<SizeF> _pageSizes;
-        internal Stack<PdfSelection> _selections = new Stack<PdfSelection>();
         /// <summary>
         /// Initializes a new instance of the PdfDocument class with the provided path.
         /// </summary>
@@ -41,6 +39,7 @@ namespace PdfiumViewer.Core
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
+
             return Load(File.OpenRead(path), password);
         }
 
@@ -118,241 +117,30 @@ namespace PdfiumViewer.Core
         /// </summary>
         public int PageCount => _pageCount;
 
-        public IReadOnlyList<PdfPage> Pages { get; private set; }
+        public IReadOnlyList<PdfPage> Pages { get; }
 
         /// <summary>
         /// Bookmarks stored in this PdfFile
         /// </summary>
         public PdfBookmarkCollection Bookmarks => _file.Bookmarks;
 
+        public PDFSelectionCollection Selections { get; }
+
+
         private PdfDocument(Stream stream, string password)
         {
             _file = new PdfFile(stream, password);
             _pageCount = _file.GetPageCount();
-            _pageSizes = new List<SizeF>(PageCount);
 
             var pages = new List<PdfPage>();
             for (var i = 0; i < PageCount; i++)
             {
-                _pageSizes.Add(new SizeF());
                 pages.Add(new PdfPage(_file._document, _file._form, i));
             }
 
             Pages = pages.AsReadOnly();
-        }
 
-        /// <summary>
-        /// Renders a page of the PDF document to the provided graphics instance.
-        /// </summary>
-        /// <param name="page">Number of the page to render.</param>
-        /// <param name="graphics">Graphics instance to render the page on.</param>
-        /// <param name="dpiX">Horizontal DPI.</param>
-        /// <param name="dpiY">Vertical DPI.</param>
-        /// <param name="bounds">Bounds to render the page in.</param>
-        /// <param name="forPrinting">Render the page for printing.</param>
-        public void Render(int page, Graphics graphics, float dpiX, float dpiY, Rectangle bounds, bool forPrinting)
-        {
-            Render(page, graphics, dpiX, dpiY, bounds, forPrinting ? PdfRenderFlags.ForPrinting : PdfRenderFlags.None);
-        }
-
-        /// <summary>
-        /// Renders a page of the PDF document to the provided graphics instance.
-        /// </summary>
-        /// <param name="page">Number of the page to render.</param>
-        /// <param name="graphics">Graphics instance to render the page on.</param>
-        /// <param name="dpiX">Horizontal DPI.</param>
-        /// <param name="dpiY">Vertical DPI.</param>
-        /// <param name="bounds">Bounds to render the page in.</param>
-        /// <param name="flags">Flags used to influence the rendering.</param>
-        public void Render(int page, Graphics graphics, float dpiX, float dpiY, Rectangle bounds, PdfRenderFlags flags)
-        {
-            if (graphics == null)
-                throw new ArgumentNullException(nameof(graphics));
-            if (_disposed)
-                throw new ObjectDisposedException(GetType().Name);
-
-            var graphicsDpiX = graphics.DpiX;
-            var graphicsDpiY = graphics.DpiY;
-
-            var dc = graphics.GetHdc();
-
-            try
-            {
-                if ((int)graphicsDpiX != (int)dpiX || (int)graphicsDpiY != (int)dpiY)
-                {
-                    var transform = new NativeMethods.XFORM
-                    {
-                        eM11 = graphicsDpiX / dpiX,
-                        eM22 = graphicsDpiY / dpiY
-                    };
-
-                    NativeMethods.SetGraphicsMode(dc, NativeMethods.GmAdvanced);
-                    NativeMethods.ModifyWorldTransform(dc, ref transform, NativeMethods.MwtLeftMultiply);
-                }
-
-                var point = new NativeMethods.POINT();
-                NativeMethods.SetViewportOrgEx(dc, bounds.X, bounds.Y, out point);
-
-                var success = _file.RenderPDFPageToDC(
-                    page,
-                    dc,
-                    (int)dpiX, (int)dpiY,
-                    0, 0, bounds.Width, bounds.Height,
-                    FlagsToFPDFFlags(flags)
-                );
-
-                NativeMethods.SetViewportOrgEx(dc, point.X, point.Y, out point);
-
-                if (!success)
-                    throw new Win32Exception();
-            }
-            finally
-            {
-                graphics.ReleaseHdc(dc);
-            }
-        }
-
-        /// <summary>
-        /// Renders a page of the PDF document to an image.
-        /// </summary>
-        /// <param name="page">Number of the page to render.</param>
-        /// <param name="dpiX">Horizontal DPI.</param>
-        /// <param name="dpiY">Vertical DPI.</param>
-        /// <param name="forPrinting">Render the page for printing.</param>
-        /// <returns>The rendered image.</returns>
-        public Image Render(int page, float dpiX, float dpiY, bool forPrinting)
-        {
-            var size = _pageSizes[page];
-
-            return Render(page, (int)size.Width, (int)size.Height, dpiX, dpiY, forPrinting);
-        }
-
-        /// <summary>
-        /// Renders a page of the PDF document to an image.
-        /// </summary>
-        /// <param name="page">Number of the page to render.</param>
-        /// <param name="dpiX">Horizontal DPI.</param>
-        /// <param name="dpiY">Vertical DPI.</param>
-        /// <param name="flags">Flags used to influence the rendering.</param>
-        /// <returns>The rendered image.</returns>
-        public Image Render(int page, float dpiX, float dpiY, PdfRenderFlags flags)
-        {
-            var size = _pageSizes[page];
-
-            return Render(page, (int)size.Width, (int)size.Height, dpiX, dpiY, flags);
-        }
-
-        /// <summary>
-        /// Renders a page of the PDF document to an image.
-        /// </summary>
-        /// <param name="page">Number of the page to render.</param>
-        /// <param name="width">Width of the rendered image.</param>
-        /// <param name="height">Height of the rendered image.</param>
-        /// <param name="dpiX">Horizontal DPI.</param>
-        /// <param name="dpiY">Vertical DPI.</param>
-        /// <param name="forPrinting">Render the page for printing.</param>
-        /// <returns>The rendered image.</returns>
-        public Image Render(int page, int width, int height, float dpiX, float dpiY, bool forPrinting)
-        {
-            return Render(page, width, height, dpiX, dpiY, forPrinting ? PdfRenderFlags.ForPrinting : PdfRenderFlags.None);
-        }
-
-        /// <summary>
-        /// Renders a page of the PDF document to an image.
-        /// </summary>
-        /// <param name="page">Number of the page to render.</param>
-        /// <param name="width">Width of the rendered image.</param>
-        /// <param name="height">Height of the rendered image.</param>
-        /// <param name="dpiX">Horizontal DPI.</param>
-        /// <param name="dpiY">Vertical DPI.</param>
-        /// <param name="flags">Flags used to influence the rendering.</param>
-        /// <returns>The rendered image.</returns>
-        public Image Render(int page, int width, int height, float dpiX, float dpiY, PdfRenderFlags flags)
-        {
-            return Render(page, width, height, dpiX, dpiY, 0, flags);
-        }
-
-        /// <summary>
-        /// Renders a page of the PDF document to an image.
-        /// </summary>
-        /// <param name="page">Number of the page to render.</param>
-        /// <param name="width">Width of the rendered image.</param>
-        /// <param name="height">Height of the rendered image.</param>
-        /// <param name="dpiX">Horizontal DPI.</param>
-        /// <param name="dpiY">Vertical DPI.</param>
-        /// <param name="rotate">Rotation.</param>
-        /// <param name="flags">Flags used to influence the rendering.</param>
-        /// <returns>The rendered image.</returns>
-        public Image Render(int page, int width, int height, float dpiX, float dpiY, PdfRotation rotate, PdfRenderFlags flags)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException(GetType().Name);
-
-            if ((flags & PdfRenderFlags.CorrectFromDpi) != 0)
-            {
-                width = width * (int)dpiX / 72;
-                height = height * (int)dpiY / 72;
-            }
-
-            var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            bitmap.SetResolution(dpiX, dpiY);
-
-            var data = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, bitmap.PixelFormat);
-
-            try
-            {
-                var handle = NativeMethods.FPDFBitmap_CreateEx(width, height, 4, data.Scan0, width * 4);
-
-                try
-                {
-                    var background = (flags & PdfRenderFlags.Transparent) == 0 ? 0xFFFFFFFF : 0x00FFFFFF;
-
-                    NativeMethods.FPDFBitmap_FillRect(handle, 0, 0, width, height, background);
-
-                    var success = _file.RenderPDFPageToBitmap(
-                        page,
-                        handle,
-                        (int)dpiX, (int)dpiY,
-                        0, 0, width, height,
-                        (int)rotate,
-                        FlagsToFPDFFlags(flags),
-                        (flags & PdfRenderFlags.Annotations) != 0
-                    );
-
-                    if (!success)
-                        throw new Win32Exception();
-                }
-                finally
-                {
-                    NativeMethods.FPDFBitmap_Destroy(handle);
-                }
-            }
-            finally
-            {
-                bitmap.UnlockBits(data);
-            }
-
-            return bitmap;
-        }
-
-        private NativeMethods.FPDF FlagsToFPDFFlags(PdfRenderFlags flags)
-        {
-            return (NativeMethods.FPDF)(flags & ~(PdfRenderFlags.Transparent | PdfRenderFlags.CorrectFromDpi));
-        }
-
-        /// <summary>
-        /// Save the PDF document to the specified location.
-        /// </summary>
-        /// <param name="path">Path to save the PDF document to.</param>
-        public void Save(string path)
-        {
-            if (path == null)
-                throw new ArgumentNullException("path");
-
-            using (var stream = File.Create(path))
-            {
-                Save(stream);
-            }
+            Selections = new PDFSelectionCollection();
         }
 
         /// <summary>
@@ -373,117 +161,23 @@ namespace PdfiumViewer.Core
         /// <param name="text">The text to search for.</param>
         /// <param name="matchCase">Whether to match case.</param>
         /// <param name="wholeWord">Whether to match whole words only.</param>
-        /// <returns>All matches.</returns>
-        public PdfMatches Search(string text, bool matchCase, bool wholeWord)
-        {
-            return Search(text, matchCase, wholeWord, 0, PageCount - 1);
-        }
-
-        /// <summary>
-        /// Finds all occurences of text.
-        /// </summary>
-        /// <param name="text">The text to search for.</param>
-        /// <param name="matchCase">Whether to match case.</param>
-        /// <param name="wholeWord">Whether to match whole words only.</param>
-        /// <param name="page">The page to search on.</param>
-        /// <returns>All matches.</returns>
-        public PdfMatches Search(string text, bool matchCase, bool wholeWord, int page)
-        {
-            return Search(text, matchCase, wholeWord, page, page);
-        }
-
-        /// <summary>
-        /// Finds all occurences of text.
-        /// </summary>
-        /// <param name="text">The text to search for.</param>
-        /// <param name="matchCase">Whether to match case.</param>
-        /// <param name="wholeWord">Whether to match whole words only.</param>
         /// <param name="startPage">The page to start searching.</param>
         /// <param name="endPage">The page to end searching.</param>
         /// <returns>All matches.</returns>
         public PdfMatches Search(string text, bool matchCase, bool wholeWord, int startPage, int endPage)
         {
-            return _file.Search(text, matchCase, wholeWord, startPage, endPage);
-        }
+            var matches = new List<PdfMatch>();
 
-        /// <summary>
-        /// Get all text on the page.
-        /// </summary>
-        /// <param name="page">The page to get the text for.</param>
-        /// <returns>The text on the page.</returns>
-        public string GetPdfText(int page)
-        {
-            return _file.GetPdfText(page);
-        }
+            if (String.IsNullOrEmpty(text))
+                return new PdfMatches(startPage, endPage, matches);
 
-        /// <summary>
-        /// Get all text matching the text span.
-        /// </summary>
-        /// <param name="textSpan">The span to get the text for.</param>
-        /// <returns>The text matching the span.</returns>
-        public string GetPdfText(PdfTextSpan textSpan)
-        {
-            return _file.GetPdfText(textSpan);
+            for (var page = startPage; page <= endPage; page++)
+            {
+                matches.AddRange(Pages[page].Search(text, matchCase, wholeWord));
+            }
+            return new PdfMatches(startPage, endPage, matches);
         }
-
-        /// <summary>
-        /// Get all bounding rectangles for the text span.
-        /// </summary>
-        /// <description>
-        /// The algorithm used to get the bounding rectangles tries to join
-        /// adjacent character bounds into larger rectangles.
-        /// </description>
-        /// <param name="textSpan">The span to get the bounding rectangles for.</param>
-        /// <returns>The bounding rectangles.</returns>
-        public IList<PdfRectangle> GetTextBounds(PdfTextSpan textSpan)
-        {
-            return _file.GetTextBounds(textSpan);
-        }
-
-        /// <summary>
-        /// Convert a point from device coordinates to page coordinates.
-        /// </summary>
-        /// <param name="page">The page number where the point is from.</param>
-        /// <param name="point">The point to convert.</param>
-        /// <returns>The converted point.</returns>
-        public PointF PointToPdf(int page, Point point)
-        {
-            return _file.PointToPdf(page, point);
-        }
-
-        /// <summary>
-        /// Convert a point from page coordinates to device coordinates.
-        /// </summary>
-        /// <param name="page">The page number where the point is from.</param>
-        /// <param name="point">The point to convert.</param>
-        /// <returns>The converted point.</returns>
-        public Point PointFromPdf(int page, PointF point)
-        {
-            return _file.PointFromPdf(page, point);
-        }
-
-        /// <summary>
-        /// Convert a rectangle from device coordinates to page coordinates.
-        /// </summary>
-        /// <param name="page">The page where the rectangle is from.</param>
-        /// <param name="rect">The rectangle to convert.</param>
-        /// <returns>The converted rectangle.</returns>
-        public RectangleF RectangleToPdf(int page, Rectangle rect)
-        {
-            return _file.RectangleToPdf(page, rect);
-        }
-
-        /// <summary>
-        /// Convert a rectangle from page coordinates to device coordinates.
-        /// </summary>
-        /// <param name="page">The page where the rectangle is from.</param>
-        /// <param name="rect">The rectangle to convert.</param>
-        /// <returns>The converted rectangle.</returns>
-        public RectangleF RectangleFromPdf(int page, RectangleF rect)
-        {
-            return _file.RectangleFromPdf(page, rect);
-        }
-
+       
         /// <summary>
         /// Creates a <see cref="PrintDocument"/> for the PDF document.
         /// </summary>
@@ -515,62 +209,12 @@ namespace PdfiumViewer.Core
         }
 
         /// <summary>
-        /// Returns all links on the PDF page.
-        /// </summary>
-        /// <param name="page">The page to get the links for.</param>
-        /// <param name="size">The size of the page.</param>
-        /// <returns>A collection with the links on the page.</returns>
-        public PdfPageLinks GetPageLinks(int page, Size size)
-        {
-            return _file.GetPageLinks(page, size);
-        }
-
-        /// <summary>
-        /// Delete the page from the PDF document.
-        /// </summary>
-        /// <param name="page">The page to delete.</param>
-        public void DeletePage(int page)
-        {
-            _file.DeletePage(page);
-            _pageSizes.RemoveAt(page);
-        }
-
-        /// <summary>
-        /// Rotate the page.
-        /// </summary>
-        /// <param name="page">The page to rotate.</param>
-        /// <param name="rotation">How to rotate the page.</param>
-        public void RotatePage(int page, PdfRotation rotation)
-        {
-            _file.RotatePage(page, rotation);
-            _pageSizes[page] = _file.GetPDFDocInfo(page);
-        }
-
-        /// <summary>
         /// Get metadata information from the PDF document.
         /// </summary>
         /// <returns>The PDF metadata.</returns>
         public PdfInformation GetInformation()
         {
             return _file.GetInformation();
-        }
-
-        public SizeF GetPageSize(int pageNo)
-        {
-            if (_pageSizes.Count > pageNo && pageNo >= 0)
-            {
-                if (_pageSizes[pageNo].IsEmpty)
-                    _pageSizes[pageNo] = _file.GetPDFDocInfo(pageNo);
-
-                return _pageSizes[pageNo];
-            }
-
-            return _pageSizes[0];
-        }
-
-        internal PageData GetPage(int page)
-        {
-            return _file.GetPage(page);
         }
 
         /// <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
@@ -587,6 +231,10 @@ namespace PdfiumViewer.Core
         {
             if (!_disposed && disposing)
             {
+                foreach (var item in Pages)
+                {
+                    item.Dispose();
+                }
                 if (_file != null)
                 {
                     _file.Dispose();
@@ -599,14 +247,13 @@ namespace PdfiumViewer.Core
 
         public string GetSelectionText()
         {
-            if (_selections.Count == 0)
+            if (Selections.Count == 0)
             {
                 return string.Empty;
             }
 
             var sb = new StringBuilder();
-            var list = _selections.OrderBy(f => f.PageIndex);
-            foreach (var item in list)
+            foreach (var item in Selections)
             {
                 var page = Pages[item.PageIndex];
                 var text = page.GetText(item.StartIndex, (item.EndIndex - item.StartIndex) + 1);

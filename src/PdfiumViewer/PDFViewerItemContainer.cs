@@ -105,7 +105,6 @@ namespace PdfiumViewer
 
                 var bound = marker.Bounds[i];
                 Debug.WriteLine($"left:{bound.Left},top:{bound.Top}");
-                rect.Opacity = 0.35;
                 rect.Fill = fill;
                 rect.Stroke = border;
                 rect.StrokeThickness = borderThickness;

@@ -8,17 +8,39 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace PdfiumViewer
 {
     public partial class PDFViewer
     {
-        private bool _isMouseDown = false;
         private Point _ignore = new Point(5,5);
         private Point _lastMouse = new Point(0, 0);
         private int _lastTextIndex = -1;
 
         private Dictionary<int, IPdfMarker> _selectionMarkers = new Dictionary<int, IPdfMarker>();
+        private static Brush _defaultSelectionBrush = new SolidColorBrush(Colors.Yellow) { Opacity = 0.35 };
+
+        public static readonly DependencyProperty SelectionBrushProperty = DependencyProperty.Register(nameof(SelectionBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(_defaultSelectionBrush, PropertyChanged));
+        public Brush SelectionBrush
+        {
+            get => (Brush)GetValue(SelectionBrushProperty);
+            set => SetValue(SelectionBrushProperty, value);
+        }
+
+        public static readonly DependencyProperty SelectionBorderBrushProperty = DependencyProperty.Register(nameof(SelectionBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(_defaultSelectionBrush, PropertyChanged));
+        public Brush SelectionBorderBrush
+        {
+            get => (Brush)GetValue(SelectionBorderBrushProperty);
+            set => SetValue(SelectionBorderBrushProperty, value);
+        }
+
+        public static readonly DependencyProperty SelectionBorderThicknessProperty = DependencyProperty.Register(nameof(SelectionBorderThickness), typeof(double), typeof(PDFViewer), new PropertyMetadata(1d, PropertyChanged));
+        public double SelectionBorderThickness
+        {
+            get => (double)GetValue(SelectionBorderThicknessProperty);
+            set => SetValue(SelectionBorderThicknessProperty, value);
+        }
 
         private void Container_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
@@ -79,7 +101,7 @@ namespace PdfiumViewer
 
         private void OnSelection(Point mousePoint, PDFViewerItemContainer container)
         {
-            if (Math.Abs(mousePoint.X - _lastMouse.X) < _ignore.X && Math.Abs(mousePoint.Y - _lastMouse.Y) < _ignore.Y)
+            if (Document == null || Math.Abs(mousePoint.X - _lastMouse.X) < _ignore.X && Math.Abs(mousePoint.Y - _lastMouse.Y) < _ignore.Y)
             {
                 return;
             }
@@ -93,14 +115,19 @@ namespace PdfiumViewer
             }
 
             var page = Document.Pages[pageIndex];
-            var pdfPoint = page.PointToPdf(new Point(mousePoint.X / Zoom, mousePoint.Y / Zoom));
+            var pdfPoint = page.DeviceToPage(new Point(mousePoint.X / Zoom, mousePoint.Y / Zoom));
             var index = page.GetCharIndexAtPos(pdfPoint.X, pdfPoint.Y, _ignore.X, _ignore.Y);
 
             if (index < 0 || index == _lastTextIndex) return;
 
             _lastTextIndex = index;
 
-            var _selections = Document._selections;
+            var _selections = Document.Selections?._selections;
+            if (_selections == null)
+            {
+                return;
+            }
+
             if (!_selections.TryPeek(out PdfSelection selection))
             {
                 selection = new PdfSelection(pageIndex, index);
@@ -177,9 +204,10 @@ namespace PdfiumViewer
 
         private void OnSelectionsChanged()
         {
-            var selections = Document?._selections;
+            var selections = Document?.Selections?._selections;
             if (selections == null || selections.Count == 0) return;
 
+            Debug.WriteLine($"selection count:{selections.Count}");
             foreach (var item in selections)
             {
                 Debug.WriteLine(item.ToString());
@@ -196,7 +224,16 @@ namespace PdfiumViewer
                 }
 
                 var currentContainer = ItemContainerGenerator.ContainerFromIndex(item.PageIndex) as PDFViewerItemContainer;
-                currentContainer.AddOrUpdateMarker(marker, Zoom, MatchBrush, MatchBorderBrush, MatchBorderThickness);
+                currentContainer.AddOrUpdateMarker(marker, Zoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
+            }
+        }
+
+        private void RefreshSelection()
+        {
+            foreach (var item in _selectionMarkers)
+            {
+                var currentContainer = ItemContainerGenerator.ContainerFromIndex(item.Key) as PDFViewerItemContainer;
+                currentContainer.AddOrUpdateMarker(item.Value, Zoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
             }
         }
 
@@ -209,7 +246,7 @@ namespace PdfiumViewer
         private void EndSelection()
         {
             _lastTextIndex = -1;
-            Document?._selections?.Clear();
+            Document?.Selections?._selections?.Clear();
         }
 
         private void ClearMarker()

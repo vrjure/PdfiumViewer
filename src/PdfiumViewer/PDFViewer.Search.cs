@@ -14,6 +14,9 @@ namespace PdfiumViewer
 {
     public partial class PDFViewer
     {
+        private static Brush _defaultMatchBrush = new SolidColorBrush(Colors.Yellow) { Opacity = 0.35 };
+        private static Brush _defaultCurrentMatchBrush = new SolidColorBrush(Colors.Orange) { Opacity = 0.35 };
+
         public static readonly DependencyProperty MatchesProperty = DependencyProperty.Register(nameof(Matches), typeof(PdfMatches), typeof(PDFViewer), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, PropertyChanged));
         public PdfMatches Matches
         {
@@ -28,7 +31,7 @@ namespace PdfiumViewer
             set => SetValue(MatchIndexProperty, value);
         }
 
-        public static readonly DependencyProperty MatchBrushProperty = DependencyProperty.Register(nameof(MatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Yellow, PropertyChanged));
+        public static readonly DependencyProperty MatchBrushProperty = DependencyProperty.Register(nameof(MatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(_defaultMatchBrush, PropertyChanged));
         /// <summary>
         /// Gets or sets the color of matched search terms.
         /// </summary>
@@ -38,7 +41,7 @@ namespace PdfiumViewer
             set => SetValue(PageCountProperty, value);
         }
 
-        public static readonly DependencyProperty MatchBorderBrushProperty = DependencyProperty.Register(nameof(MatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Yellow, PropertyChanged));
+        public static readonly DependencyProperty MatchBorderBrushProperty = DependencyProperty.Register(nameof(MatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(_defaultMatchBrush, PropertyChanged));
         /// <summary>
         /// Gets or sets the border color of matched search terms.
         /// </summary>
@@ -55,7 +58,7 @@ namespace PdfiumViewer
             set => SetValue(MatchBorderThicknessProperty, value);
         }
 
-        public static readonly DependencyProperty CurrentMatchBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Orange, PropertyChanged));
+        public static readonly DependencyProperty CurrentMatchBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(_defaultCurrentMatchBrush, PropertyChanged));
         /// <summary>
         /// Gets or sets the color of the current match.
         /// </summary>
@@ -65,7 +68,7 @@ namespace PdfiumViewer
             set => SetValue(CurrentMatchBrushProperty, value);
         }
 
-        public static readonly DependencyProperty CurrentMatchBorderBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(Brushes.Orange, PropertyChanged));
+        public static readonly DependencyProperty CurrentMatchBorderBrushProperty = DependencyProperty.Register(nameof(CurrentMatchBorderBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(_defaultCurrentMatchBrush, PropertyChanged));
         /// <summary>
         /// Gets or sets the border color of the current match.
         /// </summary>
@@ -139,13 +142,8 @@ namespace PdfiumViewer
 
         private PdfMarker ToMarker(PdfMatch item, int matchIndex, bool current)
         {
-            var bounds = Document.GetTextBounds(item.TextSpan);
-            var rects = new Rect[bounds.Count];
-            for (int i = 0; i < bounds.Count; i++)
-            {
-                rects[i] = bounds[i].Bound;
-            }
-            return new PdfMatchMarker(item.Page, matchIndex, rects, current);
+            var bounds = Document.Pages[item.Page].GetTextBounds(item.TextSpan.Offset, item.TextSpan.Length);
+            return new PdfMatchMarker(item.Page, matchIndex, bounds.ToArray(), current);
         }
 
         private void OnMatchIndexChanged(int newIndex, int oldIndex)

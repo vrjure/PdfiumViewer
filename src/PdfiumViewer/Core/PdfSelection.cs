@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace PdfiumViewer.Core
 {
-    internal class PdfSelection
+    public class PdfSelection
     {
         private bool _fixedEndIndex = false;
-        public PdfSelection(int pageIndex, int initIndex, bool fixedEndIndex = false) : this(pageIndex, initIndex, initIndex, fixedEndIndex)
+        internal PdfSelection(int pageIndex, int initIndex, bool fixedEndIndex = false) : this(pageIndex, initIndex, initIndex, fixedEndIndex)
         {
 
         }
 
-        public PdfSelection(int pageIndex, int beginIndex, int endIndex, bool fixedEndIndex = false)
+        internal PdfSelection(int pageIndex, int beginIndex, int endIndex, bool fixedEndIndex = false)
         {
             PageIndex = pageIndex;
             BeginSelectionIndex = beginIndex;

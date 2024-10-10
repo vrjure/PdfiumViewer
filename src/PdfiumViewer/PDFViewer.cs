@@ -41,10 +41,10 @@ namespace PdfiumViewer
             set => SetValue(SourceProperty, value);
         }
 
-        public static readonly DependencyProperty DocumentProperty = DependencyProperty.Register(nameof(Document), typeof(PdfDocument), typeof(PDFViewer), new FrameworkPropertyMetadata(null, PropertyChanged));
-        public PdfDocument Document
+        public static readonly DependencyProperty DocumentProperty = DependencyProperty.Register(nameof(Document), typeof(IPdfDocument), typeof(PDFViewer), new FrameworkPropertyMetadata(null, PropertyChanged));
+        public IPdfDocument Document
         {
-            get => (PdfDocument)GetValue(DocumentProperty);
+            get => (IPdfDocument)GetValue(DocumentProperty);
             set => SetValue(DocumentProperty, value);
         }
 
@@ -225,6 +225,10 @@ namespace PdfiumViewer
             {
                 v.RenderMarkers();
             }
+            else if (e.Property == SelectionBorderBrushProperty || e.Property == SelectionBrushProperty || e.Property == SelectionBorderThicknessProperty)
+            {
+                v.RefreshSelection();
+            }
         }
 
         private void SourceChanged()
@@ -264,7 +268,7 @@ namespace PdfiumViewer
 
             for (var i = 0; i < PageCount; i++)
             {
-                var size = Document.GetPageSize(i);
+                var size = Document.Pages[i].Size;
                 var width = size.Width * Zoom;
                 var height = size.Height * Zoom;
                 if (i < Items.Count && Items[i] is Image img)
@@ -278,6 +282,8 @@ namespace PdfiumViewer
                     Items.Add(image);
                 }
             }
+
+            RefreshSelection();
         }
 
         private int GetPageCount()
@@ -350,14 +356,13 @@ namespace PdfiumViewer
                     RenderPage(frame, i, (int)frame.Width, (int)frame.Height);
                 }
             }
-
-            OnSelectionsChanged();
         }
 
         private void RenderPage(Image frame, int page, int width, int height)
         {
-            if (frame == null) return;
-            var image = Document.Render(page, width, height, Dpi, Dpi, Rotate, Flags);
+            if (frame == null || Document == null) return;
+
+            var image = Document.Pages[page].Render(width, height, Dpi, Dpi, Rotate, Flags);
             BitmapImage bitmapImage;
             using (var memory = new MemoryStream())
             {
@@ -374,6 +379,8 @@ namespace PdfiumViewer
             frame.Width = width;
             frame.Height = height;
             frame.Source = bitmapImage;
+
+            Document.Pages[page].Close();
         }
     }
 }

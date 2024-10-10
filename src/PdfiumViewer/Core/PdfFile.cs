@@ -78,52 +78,6 @@ namespace PdfiumViewer.Core
         {
             return NativeMethods.FPDF_GetPageCount(_document);
         }
-        public PdfPageLinks GetPageLinks(int pageNumber, Size pageSize)
-        {
-            if (_disposed)
-                throw new ObjectDisposedException(GetType().Name);
-
-            var links = new List<PdfPageLink>();
-
-            using (var pageData = new PageData(_document, _form, pageNumber))
-            {
-                var link = 0;
-                IntPtr annotation;
-
-                while (NativeMethods.FPDFLink_Enumerate(pageData.Page, ref link, out annotation))
-                {
-                    var destination = NativeMethods.FPDFLink_GetDest(_document, annotation);
-                    int? target = null;
-                    string uri = null;
-
-                    if (destination != IntPtr.Zero)
-                        target = (int)NativeMethods.FPDFDest_GetDestPageIndex(_document, destination);
-
-                    var action = NativeMethods.FPDFLink_GetAction(annotation);
-                    if (action != IntPtr.Zero)
-                    {
-                        const uint length = 1024;
-                        var sb = new StringBuilder(1024);
-                        NativeMethods.FPDFAction_GetURIPath(_document, action, sb, length);
-
-                        uri = sb.ToString();
-                    }
-
-                    var rect = new NativeMethods.FS_RECTF();
-
-                    if (NativeMethods.FPDFLink_GetAnnotRect(annotation, rect) && (target.HasValue || uri != null))
-                    {
-                        links.Add(new PdfPageLink(
-                            new RectangleF(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top),
-                            target,
-                            uri
-                        ));
-                    }
-                }
-            }
-
-            return new PdfPageLinks(links);
-        }
 
         public List<SizeF> GetPDFDocInfo()
         {

@@ -302,8 +302,8 @@ namespace PdfiumViewer.Demo.ViewModels
             {
                 for (var i = 0; i < Document.PageCount; i++)
                 {
-                    var size = Document.GetPageSize(i);
-                    var image = Document.Render(i, (int)size.Width, (int)size.Height, 96, 96, false);
+                    var size = Document.Pages[i].Size;
+                    var image = Document.Pages[i].Render((int)size.Width, (int)size.Height, 96, 96, false);
                     image.Save(Path.Combine(path, $"img{i}.png"));
                 }
             }
@@ -335,7 +335,7 @@ namespace PdfiumViewer.Demo.ViewModels
                 Matches = null;
             }
 
-            Matches = Document.Search(SearchText, MatchCase, WholeWordOnly, 0, PageCount);
+            Matches = Document.Search(SearchText, MatchCase, WholeWordOnly);
             MatchIndex = 0;
             if (Matches == null || Matches.Items == null || Matches.Items.Count == 0)
             {

@@ -248,11 +248,11 @@ namespace PdfiumViewer.Core
             }
         }
 
-        public static IntPtr FPDFText_FindStart(IntPtr page, byte[] findWhat, FPDF_SEARCH_FLAGS flags, int start_index)
+        public static IntPtr FPDFText_FindStart(IntPtr text_page, byte[] findWhat, FPDF_SEARCH_FLAGS flags, int start_index)
         {
             lock (LockString)
             {
-                return Imports.FPDFText_FindStart(page, findWhat, flags, start_index);
+                return Imports.FPDFText_FindStart(text_page, findWhat, flags, start_index);
             }
         }
 
@@ -272,43 +272,43 @@ namespace PdfiumViewer.Core
             }
         }
 
-        public static int FPDFText_GetText(IntPtr page, int start_index, int count, byte[] result)
+        public static int FPDFText_GetText(IntPtr text_page, int start_index, int count, byte[] result)
         {
             lock (LockString)
             {
-                return Imports.FPDFText_GetText(page, start_index, count, result);
+                return Imports.FPDFText_GetText(text_page, start_index, count, result);
             }
         }
 
-        public static void FPDFText_GetCharBox(IntPtr page, int index, out double left, out double right, out double bottom, out double top)
+        public static void FPDFText_GetCharBox(IntPtr text_page, int index, out double left, out double right, out double bottom, out double top)
         {
             lock (LockString)
             {
-                Imports.FPDFText_GetCharBox(page, index, out left, out right, out bottom, out top);
+                Imports.FPDFText_GetCharBox(text_page, index, out left, out right, out bottom, out top);
             }
         }
 
-        public static int FPDFText_CountChars(IntPtr page)
+        public static int FPDFText_CountChars(IntPtr text_page)
         {
             lock (LockString)
             {
-                return Imports.FPDFText_CountChars(page);
+                return Imports.FPDFText_CountChars(text_page);
             }
         }
 
-        public static int FPDFText_CountRects(IntPtr page, int start_index, int count)
+        public static int FPDFText_CountRects(IntPtr text_page, int start_index, int count)
         {
             lock (LockString)
             {
-                return Imports.FPDFText_CountRects(page, start_index, count);
+                return Imports.FPDFText_CountRects(text_page, start_index, count);
             }
         }
 
-        public static void FPDFText_GetRect(IntPtr page, int rect_index, out double left, out double top, out double right, out double bottom)
+        public static void FPDFText_GetRect(IntPtr text_page, int rect_index, out double left, out double top, out double right, out double bottom)
         {
             lock (LockString)
             {
-                Imports.FPDFText_GetRect(page, rect_index, out left, out top, out right, out bottom);
+                Imports.FPDFText_GetRect(text_page, rect_index, out left, out top, out right, out bottom);
             }
         }
 
@@ -704,7 +704,7 @@ namespace PdfiumViewer.Core
             public static extern IntPtr FPDFBitmap_Destroy(IntPtr bitmapHandle);
 
             [DllImport("pdfium.dll")]
-            public static extern IntPtr FPDFText_FindStart(IntPtr page, byte[] findWhat, FPDF_SEARCH_FLAGS flags, int start_index);
+            public static extern IntPtr FPDFText_FindStart(IntPtr text_page, byte[] findWhat, FPDF_SEARCH_FLAGS flags, int start_index);
 
             [DllImport("pdfium.dll")]
             public static extern int FPDFText_GetSchResultIndex(IntPtr handle);
@@ -713,19 +713,19 @@ namespace PdfiumViewer.Core
             public static extern int FPDFText_GetSchCount(IntPtr handle);
 
             [DllImport("pdfium.dll")]
-            public static extern int FPDFText_GetText(IntPtr page, int start_index, int count, byte[] result);
+            public static extern int FPDFText_GetText(IntPtr text_page, int start_index, int count, byte[] result);
 
             [DllImport("pdfium.dll")]
-            public static extern void FPDFText_GetCharBox(IntPtr page, int index, out double left, out double right, out double bottom, out double top);
+            public static extern void FPDFText_GetCharBox(IntPtr text_page, int index, out double left, out double right, out double bottom, out double top);
 
             [DllImport("pdfium.dll")]
-            public static extern int FPDFText_CountRects(IntPtr page, int start_index, int count);
+            public static extern int FPDFText_CountRects(IntPtr text_page, int start_index, int count);
 
             [DllImport("pdfium.dll")]
-            public static extern void FPDFText_GetRect(IntPtr page, int rect_index, out double left, out double top, out double right, out double bottom);
+            public static extern void FPDFText_GetRect(IntPtr text_page, int rect_index, out double left, out double top, out double right, out double bottom);
 
             [DllImport("pdfium.dll")]
-            public static extern int FPDFText_CountChars(IntPtr page);
+            public static extern int FPDFText_CountChars(IntPtr text_page);
 
             [DllImport("pdfium.dll")]
             public static extern bool FPDFText_FindNext(IntPtr handle);

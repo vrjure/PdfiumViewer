@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.Windows;
 using PdfiumViewer.Enums;
 
 namespace PdfiumViewer.Core
@@ -50,7 +51,7 @@ namespace PdfiumViewer.Core
 
             if (_settings.MultiplePages == null && _currentPage < _document.PageCount)
             {
-                var landscape = GetOrientation(_document.GetPageSize(_currentPage)) == Orientation.Landscape;
+                var landscape = GetOrientation(_document.Pages[_currentPage].Size) == Orientation.Landscape;
 
                 if (inverseLandscape)
                     landscape = !landscape;
@@ -121,8 +122,8 @@ namespace PdfiumViewer.Core
         {
             if (_currentPage < _document.PageCount)
             {
-                var pageOrientation = GetOrientation(_document.GetPageSize(_currentPage));
-                var printOrientation = GetOrientation(e.PageBounds.Size);
+                var pageOrientation = GetOrientation(_document.Pages[_currentPage].Size);
+                var printOrientation = GetOrientation(new System.Windows.Size(e.PageBounds.Width, e.PageBounds.Height));
 
                 e.PageSettings.Landscape = pageOrientation == Orientation.Landscape;
 
@@ -165,7 +166,7 @@ namespace PdfiumViewer.Core
 
         private void RenderPage(PrintPageEventArgs e, int page, double left, double top, double width, double height)
         {
-            var size = _document.GetPageSize(page);
+            var size = _document.Pages[page].Size;
 
             double pageScale = size.Height / size.Width;
             var printScale = height / width;
@@ -181,8 +182,7 @@ namespace PdfiumViewer.Core
             left += (width - scaledWidth) / 2;
             top += (height - scaledHeight) / 2;
 
-            _document.Render(
-                page,
+            _document.Pages[page].Render(
                 e.Graphics,
                 e.Graphics.DpiX,
                 e.Graphics.DpiY,
@@ -208,7 +208,7 @@ namespace PdfiumViewer.Core
             return (int)((value / 100.0) * dpi);
         }
 
-        private Orientation GetOrientation(SizeF pageSize)
+        private Orientation GetOrientation(System.Windows.Size pageSize)
         {
             return pageSize.Height > pageSize.Width 
                 ? Orientation.Portrait 
