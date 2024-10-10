@@ -15,7 +15,7 @@ Apache 2.0 License.
 - [x] zoom
 - [x] search text
 - [x] bookmarks
-- [ ] select text
+- [x] select text
 - [ ] page mode switch
 - [ ] rotate
 - [ ] get page text
