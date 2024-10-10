@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Windows;
 
 namespace PdfiumViewer.Drawing
 {
@@ -12,11 +13,11 @@ namespace PdfiumViewer.Drawing
 
         public int Page => _page - 1;
 
-        public RectangleF Bound { get; }
+        public Rect Bound { get; }
 
         public bool IsValid => _page != 0;
 
-        public PdfRectangle(int page, RectangleF bounds)
+        public PdfRectangle(int page, Rect bounds)
         {
             _page = page + 1;
             Bound = bounds;

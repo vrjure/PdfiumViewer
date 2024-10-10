@@ -6,6 +6,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Printing;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Windows.Interop;
 using PdfiumViewer.Drawing;
 using PdfiumViewer.Enums;
@@ -20,7 +22,7 @@ namespace PdfiumViewer.Core
         private bool _disposed;
         private PdfFile _file;
         private readonly List<SizeF> _pageSizes;
-
+        internal Stack<PdfSelection> _selections = new Stack<PdfSelection>();
         /// <summary>
         /// Initializes a new instance of the PdfDocument class with the provided path.
         /// </summary>
@@ -110,10 +112,13 @@ namespace PdfiumViewer.Core
             return new PdfDocument(stream, password);
         }
 
+        private int _pageCount;
         /// <summary>
         /// Number of pages in the PDF document.
         /// </summary>
-        public int PageCount => _file?.GetPageCount() ?? 0;
+        public int PageCount => _pageCount;
+
+        public IReadOnlyList<PdfPage> Pages { get; private set; }
 
         /// <summary>
         /// Bookmarks stored in this PdfFile
@@ -123,9 +128,17 @@ namespace PdfiumViewer.Core
         private PdfDocument(Stream stream, string password)
         {
             _file = new PdfFile(stream, password);
+            _pageCount = _file.GetPageCount();
             _pageSizes = new List<SizeF>(PageCount);
+
+            var pages = new List<PdfPage>();
             for (var i = 0; i < PageCount; i++)
+            {
                 _pageSizes.Add(new SizeF());
+                pages.Add(new PdfPage(_file._document, _file._form, i));
+            }
+
+            Pages = pages.AsReadOnly();
         }
 
         /// <summary>
@@ -555,6 +568,11 @@ namespace PdfiumViewer.Core
             return _pageSizes[0];
         }
 
+        internal PageData GetPage(int page)
+        {
+            return _file.GetPage(page);
+        }
+
         /// <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
         /// <filterpriority>2</filterpriority>
         public void Dispose()
@@ -577,6 +595,25 @@ namespace PdfiumViewer.Core
 
                 _disposed = true;
             }
+        }
+
+        public string GetSelectionText()
+        {
+            if (_selections.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            var list = _selections.OrderBy(f => f.PageIndex);
+            foreach (var item in list)
+            {
+                var page = Pages[item.PageIndex];
+                var text = page.GetText(item.StartIndex, (item.EndIndex - item.StartIndex) + 1);
+                sb.Append(text);
+            }
+
+            return sb.ToString();
         }
     }
 }

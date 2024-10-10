@@ -143,8 +143,7 @@ namespace PdfiumViewer
             var rects = new Rect[bounds.Count];
             for (int i = 0; i < bounds.Count; i++)
             {
-                var bound = bounds[i].Bound;
-                rects[i] = new Rect(bound.Left, bound.Top, bound.Width, bound.Height);
+                rects[i] = bounds[i].Bound;
             }
             return new PdfMatchMarker(item.Page, matchIndex, rects, current);
         }

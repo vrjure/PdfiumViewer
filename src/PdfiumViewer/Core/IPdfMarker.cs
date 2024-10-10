@@ -12,6 +12,6 @@ namespace PdfiumViewer.Core
         /// The page where the marker is drawn on.
         /// </summary>
         int Page { get; }
-        Rect[] Bounds { get; }
+        Rect[] Bounds { get; set; }
     }
 }

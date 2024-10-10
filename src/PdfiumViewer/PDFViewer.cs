@@ -153,6 +153,12 @@ namespace PdfiumViewer
             container.PreviewMouseMove -= Container_PreviewMouseMove;
             container.PreviewMouseMove += Container_PreviewMouseMove;
 
+            container.PreviewMouseUp -= Container_PreviewMouseUp;
+            container.PreviewMouseUp += Container_PreviewMouseUp;
+
+            container.MouseLeave -= Container_MouseLeave;
+            container.MouseLeave += Container_MouseLeave;
+
             return container;
         }
 
@@ -344,6 +350,8 @@ namespace PdfiumViewer
                     RenderPage(frame, i, (int)frame.Width, (int)frame.Height);
                 }
             }
+
+            OnSelectionsChanged();
         }
 
         private void RenderPage(Image frame, int page, int width, int height)

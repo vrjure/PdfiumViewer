@@ -15,8 +15,8 @@ namespace PdfiumViewer.Core
     {
         private static readonly Encoding FPDFEncoding = new UnicodeEncoding(false, false, false);
 
-        private IntPtr _document;
-        private IntPtr _form;
+        internal IntPtr _document;
+        internal IntPtr _form;
         private bool _disposed;
         private NativeMethods.FPDF_FORMFILLINFO _formCallbacks;
         private GCHandle _formCallbacksHandle;
@@ -393,7 +393,7 @@ namespace PdfiumViewer.Core
             }
         }
 
-        private RectangleF RectangleFromPdf(PageData pageData, double left, double top, double right, double bottom)
+        private System.Windows.Rect RectangleFromPdf(PageData pageData, double left, double top, double right, double bottom)
         {
             NativeMethods.FPDF_PageToDevice(
                 pageData.Page,
@@ -421,7 +421,7 @@ namespace PdfiumViewer.Core
                 out var deviceY2
             );
 
-            return new RectangleF(
+            return new System.Windows.Rect(
                 deviceX1,
                 deviceY1,
                 deviceX2 - deviceX1,
@@ -492,7 +492,7 @@ namespace PdfiumViewer.Core
         private IList<PdfRectangle> GetTextBounds(IntPtr textPage, PageData pageData, int page, int index, int matchLength)
         {
             var resultBounds = new List<PdfRectangle>();
-            var lastBound = new RectangleF();
+            var lastBound = new System.Windows.Rect();
             bool isFirst = true;
 
             var len = NativeMethods.FPDFText_CountRects(textPage, index, matchLength);
@@ -515,7 +515,7 @@ namespace PdfiumViewer.Core
                     if (Math.Abs(bound.Y - lastBound.Y) >= lastBound.Height)
                     {
                         resultBounds.Add(new PdfRectangle(page, lastBound));
-                        lastBound = new RectangleF
+                        lastBound = new System.Windows.Rect
                         {
                             X = bound.X,
                             Y = bound.Y,
@@ -542,7 +542,7 @@ namespace PdfiumViewer.Core
             return Math.Abs(p1 - p2) < 4f;
         }
 
-        private RectangleF GetBound(IntPtr textPage, PageData page, int index)
+        private System.Windows.Rect GetBound(IntPtr textPage, PageData page, int index)
         {
             NativeMethods.FPDFText_GetRect(textPage, index, out var left, out var top, out var right, out var bottom);
 
@@ -710,43 +710,48 @@ namespace PdfiumViewer.Core
             }
         }
 
-        private class PageData : IDisposable
+        public PageData GetPage(int page)
         {
-            private readonly IntPtr _form;
-            private bool _disposed;
+            return new PageData(_document, _form, page);
+        }
+    }
 
-            public IntPtr Page { get; private set; }
+    class PageData : IDisposable
+    {
+        private readonly IntPtr _form;
+        private bool _disposed;
 
-            public IntPtr TextPage { get; private set; }
+        public IntPtr Page { get; private set; }
 
-            public double Width { get; private set; }
+        public IntPtr TextPage { get; private set; }
 
-            public double Height { get; private set; }
+        public double Width { get; private set; }
 
-            public PageData(IntPtr document, IntPtr form, int pageNumber)
+        public double Height { get; private set; }
+
+        public PageData(IntPtr document, IntPtr form, int pageNumber)
+        {
+            _form = form;
+
+            Page = NativeMethods.FPDF_LoadPage(document, pageNumber);
+            TextPage = NativeMethods.FPDFText_LoadPage(Page);
+            NativeMethods.FORM_OnAfterLoadPage(Page, form);
+            NativeMethods.FORM_DoPageAAction(Page, form, NativeMethods.FPDFPAGE_AACTION.OPEN);
+
+            Width = NativeMethods.FPDF_GetPageWidth(Page);
+            Height = NativeMethods.FPDF_GetPageHeight(Page);
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
             {
-                _form = form;
+                NativeMethods.FORM_DoPageAAction(Page, _form, NativeMethods.FPDFPAGE_AACTION.CLOSE);
+                NativeMethods.FORM_OnBeforeClosePage(Page, _form);
+                NativeMethods.FPDFText_ClosePage(TextPage);
+                NativeMethods.FPDF_ClosePage(Page);
 
-                Page = NativeMethods.FPDF_LoadPage(document, pageNumber);
-                TextPage = NativeMethods.FPDFText_LoadPage(Page);
-                NativeMethods.FORM_OnAfterLoadPage(Page, form);
-                NativeMethods.FORM_DoPageAAction(Page, form, NativeMethods.FPDFPAGE_AACTION.OPEN);
-
-                Width = NativeMethods.FPDF_GetPageWidth(Page);
-                Height = NativeMethods.FPDF_GetPageHeight(Page);
-            }
-
-            public void Dispose()
-            {
-                if (!_disposed)
-                {
-                    NativeMethods.FORM_DoPageAAction(Page, _form, NativeMethods.FPDFPAGE_AACTION.CLOSE);
-                    NativeMethods.FORM_OnBeforeClosePage(Page, _form);
-                    NativeMethods.FPDFText_ClosePage(TextPage);
-                    NativeMethods.FPDF_ClosePage(Page);
-
-                    _disposed = true;
-                }
+                _disposed = true;
             }
         }
     }

@@ -62,6 +62,9 @@ namespace PdfiumViewer.Demo.ViewModels
         private ICommand _nextFoundCommand;
         public ICommand NextFoundCommand => _nextFoundCommand ??= new RelayCommand(() => MatchIndex = Math.Min(MatchCount - 1, MatchIndex + 1));
 
+        private ICommand _copyCommand;
+        public ICommand CopyCommand => _copyCommand ??= new RelayCommand(CopyText);
+
         private string _pdfPath;
         public string PdfPath
         {
@@ -393,6 +396,13 @@ namespace PdfiumViewer.Demo.ViewModels
                     Rotation = PdfRotation.Rotate180;
                     break;
             }
+        }
+
+        private void CopyText()
+        {
+            var str = Document?.GetSelectionText();
+            if (string.IsNullOrEmpty(str)) return;
+            Clipboard.SetText(str);
         }
     }
 }

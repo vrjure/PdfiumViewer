@@ -236,5 +236,7 @@ namespace PdfiumViewer
         /// <param name="rect">The rectangle to convert.</param>
         /// <returns>The converted rectangle.</returns>
         RectangleF RectangleFromPdf(int page, RectangleF rect);
+
+        string GetSelectionText();
     }
 }

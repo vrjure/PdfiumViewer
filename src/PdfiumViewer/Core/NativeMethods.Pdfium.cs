@@ -550,6 +550,14 @@ namespace PdfiumViewer.Core
                 Imports.FPDF_FFLDraw(form, bitmap, page, start_x, start_y, size_x, size_y, rotate, flags);
             }
         }
+
+        public static int FPDF_GetCharIndexAtPos(IntPtr textPage, double x, double y, double xTolerance, double yTolerance)
+        {
+            lock (LockString)
+            {
+                return Imports.FPDFText_GetCharIndexAtPos(textPage, x, y, xTolerance, yTolerance);
+            }
+        }
         #endregion
 
         #region Custom Load/Save Logic
@@ -821,6 +829,9 @@ namespace PdfiumViewer.Core
 
             [DllImport("pdfium.dll")]
             public static extern void FPDF_FFLDraw(IntPtr form, IntPtr bitmap, IntPtr page, int start_x, int start_y, int size_x, int size_y, int rotate, FPDF flags);
+
+            [DllImport("pdfium.dll")]
+            public static extern int FPDFText_GetCharIndexAtPos(IntPtr text_page, double x, double y, double xTolerance, double yTolerance);
             #endregion
         }
 

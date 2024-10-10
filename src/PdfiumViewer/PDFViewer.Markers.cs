@@ -67,7 +67,7 @@ namespace PdfiumViewer
                 for (int i = RenderStartIndex; i <= RenderEndIndex; i++)
                 {
                     var container = GetContainerFormItem(Items[i] as FrameworkElement);
-                    container.ClearMarker();
+                    container.ClearMarker<PdfMatchMarker>();
                 }
                 return;
             }
@@ -95,7 +95,7 @@ namespace PdfiumViewer
                 return;
             }
 
-            var container = GetContainerFormItem(Items[marker.Page] as FrameworkElement);
+            var container = ItemContainerGenerator.ContainerFromIndex(marker.Page) as PDFViewerItemContainer;
 
             var fill = MatchBrush;
             var border = MatchBorderBrush;

@@ -1,6 +1,7 @@
 ﻿using PdfiumViewer.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace PdfiumViewer
             DefaultStyleKeyProperty.OverrideMetadata(typeof(PDFViewerItemContainer), new FrameworkPropertyMetadata(typeof(PDFViewerItemContainer)));
         }
         private Canvas _overlayLayer;
-        private Canvas OverlayLayer
+        internal Canvas OverlayLayer
         {
             get => _overlayLayer;
             set => _overlayLayer = value;
@@ -37,6 +38,28 @@ namespace PdfiumViewer
         internal void ClearMarker()
         {
             OverlayLayer?.Children?.Clear();
+        }
+
+        internal void ClearMarker<T>() where T : IPdfMarker
+        {
+            var list = new List<IPdfMarker>();
+            foreach (var item in _markers)
+            {
+                if (item.Key is T)
+                {
+                    foreach (var rect in item.Value)
+                    {
+                        OverlayLayer?.Children?.Remove(rect);
+                    }
+
+                    list.Add(item.Key);
+                }
+            }
+
+            foreach (var item in list)
+            {
+                _markers.Remove(item);
+            }
         }
 
         internal void AddOrUpdateMarker(IPdfMarker marker, double zoom, Brush fill, Brush border, double borderThickness)
@@ -61,7 +84,7 @@ namespace PdfiumViewer
                 }
                 else
                 {
-                    for (int i = marker.Bounds.Length; i < rects.Length; i++)
+                    for (int i = 0; i < rects.Length; i++)
                     {
                         OverlayLayer?.Children.Remove(rects[i]);
                     }
@@ -73,6 +96,7 @@ namespace PdfiumViewer
             for (int i = 0; i < rects.Length; i++)
             {
                 var rect = rects[i];
+
                 if (rect == null)
                 {
                     rects[i] = rect = new Rectangle();
@@ -80,6 +104,7 @@ namespace PdfiumViewer
                 }
 
                 var bound = marker.Bounds[i];
+                Debug.WriteLine($"left:{bound.Left},top:{bound.Top}");
                 rect.Opacity = 0.35;
                 rect.Fill = fill;
                 rect.Stroke = border;

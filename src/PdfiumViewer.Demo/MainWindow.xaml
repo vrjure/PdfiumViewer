@@ -247,7 +247,13 @@
                                 ZoomMin="{Binding ZoomMin}"
                                 HighlightAllMatches="{Binding HighlightAllMatches}"
                                 Matches="{Binding Matches}"
-                                MatchIndex="{Binding MatchIndex}"/>
+                                MatchIndex="{Binding MatchIndex}">
+            <pdfiumViewer:PDFViewer.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy" Command="{Binding CopyCommand}"/>
+                </ContextMenu>
+            </pdfiumViewer:PDFViewer.ContextMenu>
+        </pdfiumViewer:PDFViewer>
 
         <!--<StatusBar Grid.Row="2" Grid.Column="0">
             <StatusBarItem Content="Page:" />

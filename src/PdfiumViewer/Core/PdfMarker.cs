@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using PdfiumViewer.Drawing;
@@ -10,13 +12,18 @@ namespace PdfiumViewer.Core
     internal class PdfMarker : IPdfMarker
     {
         public int Page { get; }
-        public Rect[] Bounds { get; }
+        public Rect[] Bounds { get; set; }
 
 
         public PdfMarker(int page, Rect[] bound)
         {
             Page = page;
             Bounds = bound;
+        }
+
+        public PdfMarker(int page, IReadOnlyList<Rect> bounds): this(page, bounds.ToArray())
+        {
+
         }
     }
 
