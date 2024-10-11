@@ -13,5 +13,6 @@ namespace PdfiumViewer.Core
         /// </summary>
         int Page { get; }
         Rect[] Bounds { get; set; }
+        bool IsBoundsChanged { get; set; }
     }
 }

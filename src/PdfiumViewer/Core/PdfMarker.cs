@@ -12,13 +12,24 @@ namespace PdfiumViewer.Core
     internal class PdfMarker : IPdfMarker
     {
         public int Page { get; }
-        public Rect[] Bounds { get; set; }
+        private Rect[] _bounds;
+        public Rect[] Bounds
+        {
+            get => _bounds;
+            set
+            {
+                _bounds = value;
+                IsBoundsChanged = true;
+            }
+        }
 
+        public bool IsBoundsChanged { get; set; }
 
         public PdfMarker(int page, Rect[] bound)
         {
             Page = page;
             Bounds = bound;
+            IsBoundsChanged = true;
         }
 
         public PdfMarker(int page, IReadOnlyList<Rect> bounds): this(page, bounds.ToArray())

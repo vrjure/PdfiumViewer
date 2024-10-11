@@ -19,8 +19,9 @@ namespace PdfiumViewer
         private int _lastTextIndex = -1;
 
         private Dictionary<int, IPdfMarker> _selectionMarkers = new Dictionary<int, IPdfMarker>();
-        private static Brush _defaultSelectionBrush = new SolidColorBrush(Colors.Yellow) { Opacity = 0.35 };
+        private Stack<PdfSelection> _selectionChanges = new Stack<PdfSelection>();
 
+        private static Brush _defaultSelectionBrush = new SolidColorBrush(Colors.Yellow) { Opacity = 0.35 };
         public static readonly DependencyProperty SelectionBrushProperty = DependencyProperty.Register(nameof(SelectionBrush), typeof(Brush), typeof(PDFViewer), new PropertyMetadata(_defaultSelectionBrush, PropertyChanged));
         public Brush SelectionBrush
         {
@@ -95,7 +96,6 @@ namespace PdfiumViewer
 
                 var mousePoint = e.GetPosition(container.OverlayLayer);
                 OnSelection(mousePoint, container);
-                OnSelectionsChanged();
             }
         }
 
@@ -122,93 +122,134 @@ namespace PdfiumViewer
 
             _lastTextIndex = index;
 
-            var _selections = Document.Selections?._selections;
-            if (_selections == null)
+            var selections = Document.Selections?._selections;
+            if (selections == null)
             {
                 return;
             }
 
-            if (!_selections.TryPeek(out PdfSelection selection))
+            if (!selections.TryPeek(out PdfSelection selection))
             {
                 selection = new PdfSelection(pageIndex, index);
-                _selections.Push(selection);
+                selections.Push(selection);
+                _selectionChanges.Push(selection);
             }
             else if (pageIndex > selection.PageIndex)
             {
-                selection.EndSelectionIndex = Document.Pages[selection.PageIndex].GetCountChars() - 1;
-                for (int i = selection.PageIndex + 1; i <= pageIndex; i++)
+                var first = selections.Last();
+
+                if (selection.PageIndex < first.PageIndex && pageIndex >= first.PageIndex)// like: page index = 3,2,3
                 {
-                    if (i != pageIndex)
+                    while (selections.Count > 1)
                     {
-                        var chars = Document.Pages[i].GetCountChars();
-                        if (chars > 0)
+                        var temp = selections.Pop();
+                        RemoveSelection(temp.PageIndex);
+                    }
+                    selection = selections.Peek();
+                }
+
+                if (pageIndex > selection.PageIndex)
+                {
+                    selection.EndSelectionIndex = Document.Pages[selection.PageIndex].GetCountChars() - 1;
+                    _selectionChanges.Push(selection);
+
+                    for (int i = selection.PageIndex + 1; i <= pageIndex; i++)
+                    {
+                        if (i != pageIndex)
                         {
-                            selection = new PdfSelection(i, 0, chars - 1, true);
-                            _selections.Push(selection);
+                            var chars = Document.Pages[i].GetCountChars();
+                            if (chars > 0)
+                            {
+                                selection = new PdfSelection(i, 0, chars - 1, true);
+                                selections.Push(selection);
+                                _selectionChanges.Push(selection);
+                            }
+                            else
+                            {
+                                selection = new PdfSelection(i, 0);
+                                selections.Push(selection);
+                                _selectionChanges.Push(selection);
+                            }
                         }
                         else
                         {
-                            selection = new PdfSelection(i, 0);
-                            _selections.Push(selection);
+                            selection = new PdfSelection(i, 0, index);
+                            selections.Push(selection);
+                            _selectionChanges.Push(selection);
                         }
-
                     }
-                    else
-                    {
-                        selection = new PdfSelection(i, 0, index);
-                        _selections.Push(selection);
-                    }
+                }
+                else
+                {
+                    selection.EndSelectionIndex = index;
+                    _selectionChanges.Push(selection);
                 }
             }
             else if (pageIndex < selection.PageIndex)
             {
-                var first = _selections.First();
-                if (pageIndex > first.PageIndex)
-                {
-                    for (int i = pageIndex + 1; i < selection.PageIndex; i++)
-                    {
-                        _selections.TryPop(out var _);
-                        RemoveMarker(i);
-                    }
+                var first = selections.Last();
 
-                    if (_selections.TryPeek(out selection))
+                if (selection.PageIndex > first.PageIndex && pageIndex <= first.PageIndex) //like: page index = 3,4,3
+                {
+                    while (selections.Count > 1)
                     {
-                        selection.SetEndIndex(index);
+                        var temp = selections.Pop();
+                        RemoveSelection(temp.PageIndex);
                     }
+                    selection = selections.Peek();
                 }
-                else if (pageIndex < selection.PageIndex)
+
+                if (pageIndex < selection.PageIndex)
                 {
                     selection.EndSelectionIndex = 0;
-                    for (int i = pageIndex; i < selection.PageIndex; i++)
+                    _selectionChanges.Push(selection);
+
+                    var endIndex = selection.PageIndex;
+                    for (int i = pageIndex; i < endIndex; i++)
                     {
                         if (i == pageIndex)
                         {
                             var chars = Document.Pages[i].GetCountChars();
                             selection = new PdfSelection(i, index, chars - 1, true);
-                            _selections.Push(selection);
+                            selections.Push(selection);
+                            _selectionChanges.Push(selection);
                         }
                         else
                         {
                             var chars = Document.Pages[i].GetCountChars();
                             selection = new PdfSelection(i, 0, chars - 1, true);
-                            _selections.Push(selection);
+                            selections.Push(selection);
+                            _selectionChanges.Push(selection);
                         }
                     }
+                }
+                else
+                {
+                    selection.EndSelectionIndex = index;
+                    _selectionChanges.Push(selection);
                 }
             }
             else
             {
                 selection.SetEndIndex(index);
+                _selectionChanges.Push(selection);
             }
+
+            OnSelectionsChanged();
+
+#if DEBUG
+            Debug.WriteLine("current total selections start");
+            foreach (var item in selections)
+            {
+                Debug.WriteLine($"{item}");
+            }
+            Debug.WriteLine("current total selections end");
+#endif
         }
 
         private void OnSelectionsChanged()
         {
-            var selections = Document?.Selections?._selections;
-            if (selections == null || selections.Count == 0) return;
-
-            Debug.WriteLine($"selection count:{selections.Count}");
-            foreach (var item in selections)
+            while (_selectionChanges.TryPop(out var item))
             {
                 Debug.WriteLine(item.ToString());
                 var rects = Document.Pages[item.PageIndex].GetTextBounds(item.StartIndex, Math.Abs(item.EndIndex - item.StartIndex) + 1);
@@ -230,10 +271,18 @@ namespace PdfiumViewer
 
         private void RefreshSelection()
         {
-            foreach (var item in _selectionMarkers)
+            if (RenderRange == RenderRange.Invalid)
             {
-                var currentContainer = ItemContainerGenerator.ContainerFromIndex(item.Key) as PDFViewerItemContainer;
-                currentContainer.AddOrUpdateMarker(item.Value, Zoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
+                return;
+            }
+
+            for (int i = RenderRange.RenderStartIndex; i <= RenderRange.RenderEndIndex; i++)
+            {
+                if (_selectionMarkers.TryGetValue(i, out IPdfMarker marker))
+                {
+                    var currentContainer = ItemContainerGenerator.ContainerFromIndex(i) as PDFViewerItemContainer;
+                    currentContainer.AddOrUpdateMarker(marker, Zoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
+                }
             }
         }
 
@@ -260,7 +309,7 @@ namespace PdfiumViewer
             _selectionMarkers.Clear();
         }
 
-        private void RemoveMarker(int pageIndex)
+        private void RemoveSelection(int pageIndex)
         {
             if(_selectionMarkers.TryGetValue(pageIndex, out IPdfMarker marker))
             {

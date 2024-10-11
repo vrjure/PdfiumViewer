@@ -64,6 +64,11 @@ namespace PdfiumViewer
 
         internal void AddOrUpdateMarker(IPdfMarker marker, double zoom, Brush fill, Brush border, double borderThickness)
         {
+            if (!marker.IsBoundsChanged)
+            {
+                return;
+            }
+
             if (!_markers.TryGetValue(marker, out Rectangle[] rects))
             {
                 rects = new Rectangle[marker.Bounds.Length];
@@ -104,7 +109,6 @@ namespace PdfiumViewer
                 }
 
                 var bound = marker.Bounds[i];
-                Debug.WriteLine($"left:{bound.Left},top:{bound.Top}");
                 rect.Fill = fill;
                 rect.Stroke = border;
                 rect.StrokeThickness = borderThickness;
@@ -113,6 +117,8 @@ namespace PdfiumViewer
                 rect.Height = bound.Height * zoom;
                 Canvas.SetLeft(rect, bound.Left * zoom);
                 Canvas.SetTop(rect, bound.Top * zoom);
+
+                marker.IsBoundsChanged = false;
             }
         }
 

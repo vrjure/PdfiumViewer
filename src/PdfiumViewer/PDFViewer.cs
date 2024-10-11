@@ -226,6 +226,7 @@ namespace PdfiumViewer
                 {
                     v.Render();
                     v.RenderMarkers();
+                    v.RefreshSelection();
                 }
             }
         }
@@ -268,25 +269,29 @@ namespace PdfiumViewer
                 return;
             }
 
-            for (var i = 0; i < PageCount; i++)
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                var size = Document.Pages[i].Size;
-                var width = size.Width * Zoom;
-                var height = size.Height * Zoom;
-                if (i < Items.Count && Items[i] is Image img)
+                for (var i = 0; i < PageCount; i++)
                 {
-                    img.Width = width;
-                    img.Height = height;
+                    var size = Document.Pages[i].Size;
+                    var width = size.Width * Zoom;
+                    var height = size.Height * Zoom;
+                    if (i < Items.Count && Items[i] is Image img)
+                    {
+                        img.Width = width;
+                        img.Height = height;
+                    }
+                    else
+                    {
+                        var image = new Image() { Width = width, Height = height };
+                        Items.Add(image);
+                    }
                 }
-                else
-                {
-                    var image = new Image() { Width = width, Height = height };
-                    Items.Add(image);
-                }
-            }
-            Render();
-            RenderMarkers();
-            RefreshSelection();
+
+                Render();
+                RenderMarkers();
+                RefreshSelection();
+            }));
         }
 
         private int GetPageCount()
