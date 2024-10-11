@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0-windows</TargetFrameworks>
     <UseWPF>true</UseWPF>
-    <Version>3.0.2</Version>
+    <Version>3.0.3</Version>
     <Authors>Vrjure</Authors>
 	<Description>PDF viewer based on Google's PDFium port to .Net Core.Since 3.0 PdfiumViewer.Native.x86.v8-xfa and PdfiumViewer.Native.x86_64.v8-xfa are no longer used. I switch to bblanchon.PDFium.Win32.These are the features that have been implemented:View、save as image、zoom、search text、bookmarks、select text</Description>
     <Copyright>Copyright © 2024 Vrjure</Copyright>
@@ -15,9 +15,9 @@
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <PackageId>PdfiumViewer.Net.WPF</PackageId>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReleaseNotes>optimize render and selection</PackageReleaseNotes>
-    <AssemblyVersion>3.0.2</AssemblyVersion>
-    <FileVersion>3.0.2</FileVersion>
+    <PackageReleaseNotes>fix selection position not correct when zoom</PackageReleaseNotes>
+    <AssemblyVersion>3.0.3</AssemblyVersion>
+    <FileVersion>3.0.3</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
