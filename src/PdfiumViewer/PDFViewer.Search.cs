@@ -123,7 +123,7 @@ namespace PdfiumViewer
                     for (int i = 0; i < matches.Items.Count; i++)
                     {
                         var item = matches.Items[i];
-                        if (item.Page < RenderStartIndex || item.Page > RenderEndIndex)
+                        if (item.Page < RenderRange.RenderStartIndex || item.Page > RenderRange.RenderEndIndex)
                         {
                             continue;
                         }

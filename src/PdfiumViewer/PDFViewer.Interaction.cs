@@ -240,7 +240,7 @@ namespace PdfiumViewer
         private void BeginSelection()
         {
             EndSelection();
-            ClearMarker();
+            ClearSelections();
         }
 
         private void EndSelection()
@@ -249,7 +249,7 @@ namespace PdfiumViewer
             Document?.Selections?._selections?.Clear();
         }
 
-        private void ClearMarker()
+        private void ClearSelections()
         {
             foreach (var marker in _selectionMarkers)
             {

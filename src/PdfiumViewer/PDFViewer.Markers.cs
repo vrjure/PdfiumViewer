@@ -62,9 +62,9 @@ namespace PdfiumViewer
         {
             OnMarkersRemoved(oldMarkers);
 
-            if (newMarkers == null || newMarkers.Count == 0)
+            if (RenderRange != RenderRange.Invalid && (newMarkers == null || newMarkers.Count == 0))
             {
-                for (int i = RenderStartIndex; i <= RenderEndIndex; i++)
+                for (int i = RenderRange.RenderStartIndex; i <= RenderRange.RenderEndIndex; i++)
                 {
                     var container = GetContainerFormItem(Items[i] as FrameworkElement);
                     container.ClearMarker<PdfMatchMarker>();
@@ -72,9 +72,12 @@ namespace PdfiumViewer
                 return;
             }
 
-            foreach (IPdfMarker marker in newMarkers)
+            if (newMarkers != null && newMarkers.Count > 0)
             {
-                ApplyMarker(marker);
+                foreach (IPdfMarker marker in newMarkers)
+                {
+                    ApplyMarker(marker);
+                }
             }
         }
 
@@ -96,6 +99,11 @@ namespace PdfiumViewer
             }
 
             var container = ItemContainerGenerator.ContainerFromIndex(marker.Page) as PDFViewerItemContainer;
+
+            if (container == null)
+            {
+                return;
+            }
 
             var fill = MatchBrush;
             var border = MatchBorderBrush;

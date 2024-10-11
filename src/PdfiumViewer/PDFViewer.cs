@@ -90,20 +90,12 @@ namespace PdfiumViewer
             set => SetValue(ZoomMaxProperty, value);
         }
 
-        private static readonly DependencyPropertyKey RenderStartIndexPropertyKey = DependencyProperty.RegisterReadOnly(nameof(RenderStartIndex), typeof(int), typeof(PDFViewer), new PropertyMetadata(0, PropertyChanged));
-        public static readonly DependencyProperty RenderStartIndexProperty = RenderStartIndexPropertyKey.DependencyProperty;
-        public int RenderStartIndex
+        private static readonly DependencyPropertyKey RenderRangePropertyKey = DependencyProperty.RegisterReadOnly(nameof(RenderRange), typeof(RenderRange), typeof(PDFViewer), new PropertyMetadata(RenderRange.Invalid, PropertyChanged));
+        public static readonly DependencyProperty RenderRangeProperty = RenderRangePropertyKey.DependencyProperty;
+        public RenderRange RenderRange
         {
-            get => (int)GetValue(RenderStartIndexPropertyKey.DependencyProperty);
-            private set => SetValue(RenderStartIndexPropertyKey, value);
-        }
-
-        private static readonly DependencyPropertyKey RenderEndIndexPropertyKey = DependencyProperty.RegisterReadOnly(nameof(RenderEndIndex), typeof(int), typeof(PDFViewer), new PropertyMetadata(0, PropertyChanged));
-        public static readonly DependencyProperty RenderEndIndexProperty = RenderEndIndexPropertyKey.DependencyProperty;
-        public int RenderEndIndex
-        {
-            get => (int)GetValue(RenderEndIndexPropertyKey.DependencyProperty);
-            private set => SetValue(RenderEndIndexPropertyKey, value);
+            get => (RenderRange)GetValue(RenderRangePropertyKey.DependencyProperty);
+            private set => SetValue(RenderRangePropertyKey, value);
         }
 
         private const double DefaultZoomMin = 0.1;
@@ -219,8 +211,7 @@ namespace PdfiumViewer
             {
                 v.OnMatchIndexChanged((int)e.NewValue, (int)e.OldValue);
             }
-            else if (e.Property == RenderStartIndexProperty || e.Property == RenderEndIndexProperty 
-                || e.Property == MatchBrushProperty || e.Property == MatchBorderBrushProperty || e.Property == MatchBorderThicknessProperty
+            else if ( e.Property == MatchBrushProperty || e.Property == MatchBorderBrushProperty || e.Property == MatchBorderThicknessProperty
                 || e.Property == CurrentMatchBrushProperty || e.Property == CurrentMatchBorderBrushProperty || e.Property == CurrentMatchBorderThicknessProperty)
             {
                 v.RenderMarkers();
@@ -228,6 +219,14 @@ namespace PdfiumViewer
             else if (e.Property == SelectionBorderBrushProperty || e.Property == SelectionBrushProperty || e.Property == SelectionBorderThicknessProperty)
             {
                 v.RefreshSelection();
+            }
+            else if (e.Property == RenderRangeProperty)
+            {
+                if (v.RenderRange != RenderRange.Invalid)
+                {
+                    v.Render();
+                    v.RenderMarkers();
+                }
             }
         }
 
@@ -247,6 +246,9 @@ namespace PdfiumViewer
 
         private void DocumentChanged(PdfDocument oldDoc, PdfDocument newDoc)
         {
+            ClearSelections();
+            SetCurrentValue(MatchesProperty, null);
+            RenderRange = RenderRange.Invalid;
             oldDoc?.Dispose();
             Items.Clear();
             SetCurrentValue(PageProperty, 0);
@@ -282,7 +284,8 @@ namespace PdfiumViewer
                     Items.Add(image);
                 }
             }
-
+            Render();
+            RenderMarkers();
             RefreshSelection();
         }
 
@@ -319,41 +322,57 @@ namespace PdfiumViewer
 
             var offset_v = e.VerticalOffset;
 
-            RenderStartIndex = Math.Max((int)(offset_v / pageSize.Height), 0);
-            RenderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
+            var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height), 0);
+            var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
 
-            Debug.WriteLine($"[{RenderStartIndex},{RenderEndIndex}],[{e.VerticalChange}, {e.VerticalOffset}]");
+            RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex, Items.Count - 1));
+            Debug.WriteLine($"[{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}],[{e.VerticalOffset}, {e.ExtentHeight}]");
 
-            Render();
-        }
-
-        private void Render(bool force = false)
-        {
-            if (RenderStartIndex <= RenderEndIndex && RenderStartIndex >= 0)
-            {
-                Render(RenderStartIndex, Math.Min(RenderEndIndex, Items.Count - 1), force);
-            }
-
-            _scrollPage = (int)Math.Round(Scroll.VerticalOffset / (ContainerFromElement(Items[0] as Image) as FrameworkElement).ActualHeight);
+            _scrollPage = (int)Math.Round(e.VerticalOffset / (ContainerFromElement(Items[0] as Image) as FrameworkElement).ActualHeight);
             if (_scrollPage < Items.Count)
             {
                 SetCurrentValue(PageProperty, _scrollPage);
             }
         }
 
+        private void Render(bool force = false)
+        {
+            if (this.RenderRange != RenderRange.Invalid && RenderRange.RenderStartIndex <= RenderRange.RenderEndIndex && RenderRange.RenderStartIndex >= 0)
+            {
+                this.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    Render(RenderRange.RenderStartIndex, Math.Min(RenderRange.RenderEndIndex, Items.Count - 1), force);
+                }));
+            }
+        }
+
         private void Render(int startIndex, int endIndex, bool force = false)
         {
-            for (int i = 0; i < Items.Count; i++)
+            for (int i = startIndex; i <= endIndex; i++)
             {
                 var frame = Items[i] as Image;
+                if (force || frame.Source == null || frame.Width != (int)frame.Source.Width || frame.Height != (int)frame.Source.Height)
+                {
+                    RenderPage(frame, i, (int)frame.Width, (int)frame.Height);
+                }
+            }
 
-                if (i < startIndex || i > endIndex)
+            for (int i = startIndex - 1; i >= 0; i--)
+            {
+                var frame = Items[i] as Image;
+                if (frame.Source != null)
                 {
                     frame.Source = null;
                 }
-                else if (force || frame.Source == null || frame.Width != (int)frame.Source.Width || frame.Height != (int)frame.Source.Height)
+            }
+
+            var count = Items.Count;
+            for (int i = endIndex + 1; i < count; i++)
+            {
+                var frame = Items[i] as Image;
+                if (frame.Source != null)
                 {
-                    RenderPage(frame, i, (int)frame.Width, (int)frame.Height);
+                    frame.Source = null;
                 }
             }
         }
