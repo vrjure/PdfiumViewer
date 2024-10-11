@@ -290,7 +290,7 @@ namespace PdfiumViewer
 
                 Render();
                 RenderMarkers();
-                RefreshSelection();
+                RefreshSelection(true);
             }));
         }
 

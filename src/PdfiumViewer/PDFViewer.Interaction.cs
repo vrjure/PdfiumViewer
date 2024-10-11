@@ -269,7 +269,7 @@ namespace PdfiumViewer
             }
         }
 
-        private void RefreshSelection()
+        private void RefreshSelection(bool force = false)
         {
             if (RenderRange == RenderRange.Invalid)
             {
@@ -280,6 +280,10 @@ namespace PdfiumViewer
             {
                 if (_selectionMarkers.TryGetValue(i, out IPdfMarker marker))
                 {
+                    if (force)
+                    {
+                        marker.IsBoundsChanged = true;
+                    }
                     var currentContainer = ItemContainerGenerator.ContainerFromIndex(i) as PDFViewerItemContainer;
                     currentContainer.AddOrUpdateMarker(marker, Zoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
                 }
