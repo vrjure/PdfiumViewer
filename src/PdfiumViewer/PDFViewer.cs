@@ -331,9 +331,9 @@ namespace PdfiumViewer
             var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
 
             RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex, Items.Count - 1));
-            Debug.WriteLine($"[{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}],[{e.VerticalOffset}, {e.ExtentHeight}]");
+            Debug.WriteLine($"[{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}],[{e.VerticalOffset}, {e.ExtentHeight}, {e.ViewportHeight}]");
 
-            _scrollPage = (int)Math.Round(e.VerticalOffset / (ContainerFromElement(Items[0] as Image) as FrameworkElement).ActualHeight);
+            _scrollPage = (int)Math.Round(offset_v / (ContainerFromElement(Items[0] as Image) as FrameworkElement).ActualHeight);
             if (_scrollPage < Items.Count)
             {
                 SetCurrentValue(PageProperty, _scrollPage);

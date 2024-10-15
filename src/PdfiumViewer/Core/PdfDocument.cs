@@ -244,23 +244,5 @@ namespace PdfiumViewer.Core
                 _disposed = true;
             }
         }
-
-        public string GetSelectionText()
-        {
-            if (Selections.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            var sb = new StringBuilder();
-            foreach (var item in Selections)
-            {
-                var page = Pages[item.PageIndex];
-                var text = page.GetText(item.StartIndex, (item.EndIndex - item.StartIndex) + 1);
-                sb.Append(text);
-            }
-
-            return sb.ToString();
-        }
     }
 }

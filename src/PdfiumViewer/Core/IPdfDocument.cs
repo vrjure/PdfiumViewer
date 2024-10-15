@@ -69,7 +69,5 @@ namespace PdfiumViewer
         /// </summary>
         /// <returns>The PDF metadata.</returns>
         PdfInformation GetInformation();
-
-        string GetSelectionText();
     }
 }
