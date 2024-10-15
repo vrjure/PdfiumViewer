@@ -43,6 +43,25 @@ namespace PdfiumViewer
             set => SetValue(SelectionBorderThicknessProperty, value);
         }
 
+        protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnPreviewMouseWheel(e);
+
+            Debug.WriteLine($"Delta = {e.Delta}");
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                if (e.Delta > 0)
+                {
+                    SetCurrentValue(ZoomProperty, Zoom + 0.2);
+                }
+                else
+                {
+                    SetCurrentValue(ZoomProperty, Zoom - 0.2);
+                }
+            }
+        }
+
         private void Container_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
             Debug.WriteLine("mouse level");
