@@ -181,8 +181,8 @@
                     <converters:AllowableCharactersTextBoxBehavior RegularExpression="^[0-9.\-]+$" MaxLength="7" />
                 </b:Interaction.Behaviors>
             </TextBox>
-            <!--<TextBlock VerticalAlignment="Center" FontSize="14" Text="%" />
-            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
+            <TextBlock VerticalAlignment="Center" FontSize="14" Text="%" />
+            <!--<GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
             <Button ToolTip="Single Page Mode"
                     Command="{Binding PageModeCommand}"
@@ -198,20 +198,15 @@
                     Command="{Binding PageModeCommand}"
                     CommandParameter="ContinuousMode">
                 <Image Source="Resources/continuous_mode.png" />
-            </Button>
+            </Button>-->
             <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
             <Button ToolTip="Fit Width"
-                    Command="{Binding ZoomModeCommand}"
-                    CommandParameter="FitWidth">
+                    Command="{Binding FitWidthCommand}">
                 <Image Source="Resources/fit_width.png" />
             </Button>
-            <Button ToolTip="Fit Height" 
-                    Command="{Binding ZoomModeCommand}"
-                    CommandParameter="FitHeight">
-                <Image Source="Resources/fit_height.png" />
-            </Button>
-            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
+            
+            <!--<GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
             <Button ToolTip="Rotate Left"
                     Command="{Binding RotateLeftCommand}">
@@ -220,8 +215,8 @@
             <Button ToolTip="Rotate Right"
                     Command="{Binding RotateRightCommand}">
                 <Image Source="Resources/rotate_right.png" />
-            </Button>
-            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
+            </Button>-->
+            <!--<GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
             <Button ToolTip="Transparent Page" Click="OnTransparent">
                 <Image Source="Resources/transparent.png" />
@@ -247,7 +242,8 @@
                                 ZoomMin="{Binding ZoomMin}"
                                 HighlightAllMatches="{Binding HighlightAllMatches}"
                                 Matches="{Binding Matches}"
-                                MatchIndex="{Binding MatchIndex}">
+                                MatchIndex="{Binding MatchIndex}"
+                                FitWidth="{Binding FitWidth}">
             <pdfiumViewer:PDFViewer.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Copy" Command="{Binding CopyCommand}"/>

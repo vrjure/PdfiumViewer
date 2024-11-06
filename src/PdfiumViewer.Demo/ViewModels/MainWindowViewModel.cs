@@ -47,8 +47,8 @@ namespace PdfiumViewer.Demo.ViewModels
         private ICommand _pageModeCommand;
         public ICommand PageModeCommand => _pageModeCommand ??= new RelayCommand<string>(mode=> PageMode = Enum.Parse<PdfViewerPagesDisplayMode>(mode));
 
-        private ICommand _zoomModeCommand;
-        public ICommand ZoomModeCommand => _zoomModeCommand ??= new RelayCommand<string>(mode => ZoomMode = Enum.Parse<PdfViewerZoomMode>(mode));
+        private ICommand _fitWidthCommand;
+        public ICommand FitWidthCommand => _fitWidthCommand ??= new RelayCommand(() => FitWidth = !FitWidth);
 
         private ICommand _rotateLeftCommand;
         public ICommand RotateLeftCommand => _rotateLeftCommand ??= new RelayCommand(Counterclockwise);
@@ -218,7 +218,7 @@ namespace PdfiumViewer.Demo.ViewModels
             set => SetProperty(ref _zoom, value);
         }
 
-        private double _zoomMax = 5;
+        private double _zoomMax = 4;
         public double ZoomMax
         {
             get => _zoomMax;
@@ -232,7 +232,6 @@ namespace PdfiumViewer.Demo.ViewModels
             set => SetProperty(ref _zoomMin, value);
         }
 
-
         private PdfViewerPagesDisplayMode _pageMode = PdfViewerPagesDisplayMode.ContinuousMode;
         public PdfViewerPagesDisplayMode PageMode
         {
@@ -241,11 +240,11 @@ namespace PdfiumViewer.Demo.ViewModels
         }
 
 
-        private PdfViewerZoomMode _zoomMode = PdfViewerZoomMode.FitHeight;
-        public PdfViewerZoomMode ZoomMode
+        private bool _fitWidth;
+        public bool FitWidth
         {
-            get => _zoomMode;
-            set => SetProperty(ref _zoomMode, value);
+            get => _fitWidth;
+            set => SetProperty(ref _fitWidth, value);
         }
 
         private PdfRotation _rotation = PdfRotation.Rotate0;

@@ -13,6 +13,11 @@ using System.Runtime.Intrinsics.Arm;
 using System.Windows.Media.Imaging;
 using PdfiumViewer.Enums;
 using System.Diagnostics;
+using PdfiumViewer.Helpers;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Media.Media3D;
+using System.Security.Cryptography;
 
 namespace PdfiumViewer
 {
@@ -90,6 +95,13 @@ namespace PdfiumViewer
             set => SetValue(ZoomMaxProperty, value);
         }
 
+        public static readonly DependencyProperty FitWidthProperty = DependencyProperty.Register(nameof(FitWidth), typeof(bool), typeof(PDFViewer), new FrameworkPropertyMetadata(false, PropertyChanged));
+        public bool FitWidth
+        {
+            get => (bool)GetValue(FitWidthProperty);
+            set => SetValue(FitWidthProperty, value);
+        }
+
         private static readonly DependencyPropertyKey RenderRangePropertyKey = DependencyProperty.RegisterReadOnly(nameof(RenderRange), typeof(RenderRange), typeof(PDFViewer), new PropertyMetadata(RenderRange.Invalid, PropertyChanged));
         public static readonly DependencyProperty RenderRangeProperty = RenderRangePropertyKey.DependencyProperty;
         public RenderRange RenderRange
@@ -99,7 +111,10 @@ namespace PdfiumViewer
         }
 
         private const double DefaultZoomMin = 0.1;
-        private const double DefaultZoomMax = 5;
+        private const double DefaultZoomMax = 4;
+
+        private Size _renderPageSize;
+        private bool _autoPage = true;
 
         static PDFViewer()
         {
@@ -184,20 +199,9 @@ namespace PdfiumViewer
                 }
                 v.ToPage();
             }
-            else if (e.Property == ZoomProperty)
+            else if (e.Property == ZoomProperty || e.Property == FitWidthProperty)
             {
                 v.PageSizeRefresh();
-            }
-            else if (e.Property == ZoomMinProperty || e.Property == ZoomMaxProperty)
-            {
-                if (v.Zoom < v.ZoomMin)
-                {
-                    v.Zoom = v.ZoomMin;
-                }
-                else if (v.Zoom > v.ZoomMax)
-                {
-                    v.Zoom = v.ZoomMax;
-                }
             }
             else if (e.Property == DpiProperty)
             {
@@ -257,41 +261,35 @@ namespace PdfiumViewer
             {
                 return;
             }
+            SetCurrentValue(PageCountProperty, GetPageCount());
+
+            if (PageCount <= 0)
+            {
+                return;
+            }
+
+            _renderPageSize = GetRenderPageSize(0);
+            for (var i = 0; i < PageCount; i++)
+            {
+                var image = new Image() 
+                { 
+                    Width = _renderPageSize.Width, 
+                    Height = _renderPageSize.Height, 
+                    RenderTransformOrigin = new Point(0.5, 0.5),
+                    LayoutTransform = new ScaleTransform()
+                };
+                Items.Add(image);
+            }
 
             PageSizeRefresh();
         }
 
         private void PageSizeRefresh()
         {
-            SetCurrentValue(PageCountProperty, GetPageCount());
-            if (PageCount <= 0)
-            {
-                return;
-            }
-
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                for (var i = 0; i < PageCount; i++)
-                {
-                    var size = Document.Pages[i].Size;
-                    var width = size.Width * Zoom;
-                    var height = size.Height * Zoom;
-                    if (i < Items.Count && Items[i] is Image img)
-                    {
-                        img.Width = width;
-                        img.Height = height;
-                    }
-                    else
-                    {
-                        var image = new Image() { Width = width, Height = height };
-                        Items.Add(image);
-                    }
-                }
-
-                Render();
-                RenderMarkers();
-                RefreshSelection(true);
-            }));
+            _renderPageSize = GetRenderPageSize(0);
+            Render(true);
+            RenderMarkers();
+            RefreshSelection(true);
         }
 
         private int GetPageCount()
@@ -305,10 +303,13 @@ namespace PdfiumViewer
             {
                 return;
             }
+
+            Debug.WriteLine($"To page {Page}");
+
             var offset = 0d;
             for (int i = 0; i < Page; i++)
             {
-                offset += (ContainerFromElement(Items[i] as Image) as FrameworkElement).ActualHeight;
+                offset += (ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement).ActualHeight;
             }
 
             Scroll.ScrollToVerticalOffset(offset);
@@ -316,27 +317,41 @@ namespace PdfiumViewer
 
         private void _scroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            if (Document == null || Items == null || Items.Count == 0)
+            if (Document == null || Items.Count == 0)
             {
                 return;
             }
 
-            var firstContainer = ContainerFromElement(Items[0] as Image) as FrameworkElement;
-            var pageSize = firstContainer.RenderSize;
-            var viewPort_h = e.ViewportHeight;
-
-            var offset_v = e.VerticalOffset;
-
-            var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height), 0);
-            var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
-
-            RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex, Items.Count - 1));
-            Debug.WriteLine($"[{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}],[{e.VerticalOffset}, {e.ExtentHeight}, {e.ViewportHeight}]");
-
-            _scrollPage = (int)Math.Round(offset_v / (ContainerFromElement(Items[0] as Image) as FrameworkElement).ActualHeight);
-            if (_scrollPage < Items.Count)
+            Debug.WriteLine($"scrollchanged = [{e.VerticalChange}, {e.ExtentHeightChange}, {e.ViewportHeightChange}]");
+            if (e.ExtentHeightChange != 0 && RenderRange != RenderRange.Invalid)
             {
-                SetCurrentValue(PageProperty, _scrollPage);
+                _autoPage = false;
+                ToPage();
+            }
+            else
+            {
+                var firstContainer = ItemContainerGenerator.ContainerFromIndex(0) as FrameworkElement;
+
+                var pageSize = firstContainer.RenderSize;
+                var viewPort_h = e.ViewportHeight;
+
+                var offset_v = e.VerticalOffset;
+
+                var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height), 0);
+                var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
+
+                RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex  + 1, Items.Count - 1));
+                Debug.WriteLine($"Render range = [{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}]]");
+
+                if (_autoPage)
+                {
+                    _scrollPage = (int)Math.Round(offset_v / pageSize.Height);
+                    if (_scrollPage < Items.Count)
+                    {
+                        SetCurrentValue(PageProperty, _scrollPage);
+                    }
+                }
+                _autoPage = true;
             }
         }
 
@@ -344,67 +359,154 @@ namespace PdfiumViewer
         {
             if (this.RenderRange != RenderRange.Invalid && RenderRange.RenderStartIndex <= RenderRange.RenderEndIndex && RenderRange.RenderStartIndex >= 0)
             {
-                this.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    Render(RenderRange.RenderStartIndex, Math.Min(RenderRange.RenderEndIndex, Items.Count - 1), force);
-                }));
+                Render(RenderRange.RenderStartIndex, Math.Min(RenderRange.RenderEndIndex, Items.Count - 1), force);
             }
         }
 
         private void Render(int startIndex, int endIndex, bool force = false)
         {
-            for (int i = startIndex; i <= endIndex; i++)
-            {
-                var frame = Items[i] as Image;
-                if (force || frame.Source == null || frame.Width != (int)frame.Source.Width || frame.Height != (int)frame.Source.Height)
-                {
-                    RenderPage(frame, i, (int)frame.Width, (int)frame.Height);
-                }
-            }
-
             for (int i = startIndex - 1; i >= 0; i--)
             {
                 var frame = Items[i] as Image;
+                StopRenderAnimation(frame);
                 if (frame.Source != null)
                 {
                     frame.Source = null;
                 }
+
+                if (frame.Width != _renderPageSize.Width || frame.Height != _renderPageSize.Height)
+                {
+                    frame.Width = _renderPageSize.Width;
+                    frame.Height = _renderPageSize.Height;
+                }
             }
 
-            var count = Items.Count;
+            var count = Document.PageCount;
             for (int i = endIndex + 1; i < count; i++)
             {
                 var frame = Items[i] as Image;
+                StopRenderAnimation(frame);
                 if (frame.Source != null)
                 {
                     frame.Source = null;
+                }
+
+                if (frame.Width != _renderPageSize.Width || frame.Height != _renderPageSize.Height)
+                {
+                    frame.Width = _renderPageSize.Width;
+                    frame.Height = _renderPageSize.Height;
+                }
+            }
+
+            for (int i = startIndex; i <= endIndex; i++)
+            {
+                var frame = Items[i] as Image;
+                if (force || frame.Source == null)
+                {
+                    if (frame.Source == null)
+                    {
+                        RenderPage(frame, i, false);
+                    }
+                    else
+                    {
+                        RenderPage(frame, i, true);
+                    }
                 }
             }
         }
 
-        private void RenderPage(Image frame, int page, int width, int height)
+        private void RenderPage(Image frame, int page, bool animation)
         {
             if (frame == null || Document == null) return;
 
-            var image = Document.Pages[page].Render(width, height, Dpi, Dpi, Rotate, Flags);
-            BitmapImage bitmapImage;
+            var size = _renderPageSize;
+            Debug.WriteLine($"page = {page}; size = {size}; animation={animation}");
+            var pdfPage = Document.Pages[page];
+            if (animation)
+            {
+                BeginRenderAnimation(frame, pdfPage, size);
+            }
+            else
+            {
+                RenderPage(frame, pdfPage, size);
+            }
+        }
+
+        private async void RenderPage(Image frame, PdfPage page, Size renderSize)
+        {
+            frame.Width = _renderPageSize.Width;
+            frame.Height = _renderPageSize.Height;
+            using var image = await this.Dispatcher.InvokeAsync(() => page.Render((int)renderSize.Width, (int)renderSize.Height, Dpi, Dpi, Rotate, Flags));
             using (var memory = new MemoryStream())
             {
                 image.Save(memory, ImageFormat.Png);
                 memory.Position = 0;
-                bitmapImage = new BitmapImage();
+
+                var bitmapImage = new BitmapImage();
+
                 bitmapImage.BeginInit();
+                bitmapImage.DecodePixelWidth = image.Width;
+                bitmapImage.DecodePixelHeight = image.Height;
                 bitmapImage.StreamSource = memory;
                 bitmapImage.CacheOption = BitmapCacheOption.OnLoad; // not a mistake - see below
                 bitmapImage.EndInit();
-                image.Dispose();
+
+                frame.Source = bitmapImage;
+            }
+        }
+
+        private Size GetRenderPageSize(int page)
+        {
+            var size = Document.Pages[page].Size;
+            var width = FitWidth ? this.Width * Zoom : size.Width * Zoom;
+            var height = FitWidth ? (this.Width / size.Width) * size.Height * Zoom : size.Height * Zoom;
+            return new Size(width, height);
+        }
+
+        private void BeginRenderAnimation(Image frame, PdfPage page, Size renderSize)
+        {
+            var scaleTransform = frame.LayoutTransform as ScaleTransform;
+            if (scaleTransform == null)
+            {
+                return;
             }
 
-            frame.Width = width;
-            frame.Height = height;
-            frame.Source = bitmapImage;
+            var scaleTo = renderSize.Width / frame.Width;
+            var duration = TimeSpan.FromSeconds(0.2);
+            var scaleXAnimation = new DoubleAnimation
+            {
+                To = scaleTo,
+                FillBehavior = FillBehavior.Stop,
+                Duration = duration
+            };
 
-            Document.Pages[page].Close();
+            var scaleYAnimation = new DoubleAnimation
+            {
+                To = scaleTo,
+                FillBehavior = FillBehavior.Stop,
+                Duration = duration
+            };
+
+            scaleYAnimation.Completed += (s, e) =>
+            {
+                Debug.WriteLine("scaleYAnimation complated");
+                RenderPage(frame, page, renderSize);
+            };
+
+            scaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnimation, HandoffBehavior.Compose);
+            scaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnimation, HandoffBehavior.Compose);
+        }
+
+        private void StopRenderAnimation(Image frame)
+        {
+            var screTransform = frame.LayoutTransform as ScaleTransform;
+            if (screTransform == null)
+            {
+                return;
+            }
+
+            screTransform.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            screTransform.BeginAnimation(ScaleTransform.ScaleYProperty, null);
         }
     }
 }

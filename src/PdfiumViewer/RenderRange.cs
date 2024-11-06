@@ -18,6 +18,8 @@ namespace PdfiumViewer
         public int RenderStartIndex { get; }
         public int RenderEndIndex { get; }
 
+        public int RenderCenterPage => (RenderEndIndex - RenderStartIndex) / 2 + RenderStartIndex;
+        public int Range => RenderEndIndex - RenderStartIndex + 1;
         public bool Equals(RenderRange other)
         {
             return this.RenderStartIndex == other.RenderStartIndex && this.RenderEndIndex == other.RenderEndIndex;
