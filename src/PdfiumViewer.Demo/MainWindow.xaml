@@ -71,10 +71,10 @@
                     Command="{Binding SearchOpenCloseCommand}">
                 <Image Source="Resources/find.png" />
             </Button>
-            <ToggleButton x:Name="BtnHand" ToolTip="Hand Tool"
+            <!--<ToggleButton x:Name="BtnHand" ToolTip="Hand Tool"
                           IsChecked="{Binding EnableHandTools, Mode=TwoWay}">
                 <Image Source="Resources/hand_cursor.png" />
-            </ToggleButton>
+            </ToggleButton>-->
             <Popup IsOpen="{Binding IsSearchOpen, Mode=TwoWay}" 
                    Placement="Bottom"
                    PlacementRectangle="0,20,0,20"
@@ -198,8 +198,8 @@
                     Command="{Binding PageModeCommand}"
                     CommandParameter="ContinuousMode">
                 <Image Source="Resources/continuous_mode.png" />
-            </Button>-->
-            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
+            </Button>
+            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>-->
 
             <Button ToolTip="Fit Width"
                     Command="{Binding FitWidthCommand}">

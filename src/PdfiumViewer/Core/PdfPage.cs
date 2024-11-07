@@ -3,6 +3,7 @@ using PdfiumViewer.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -248,6 +249,7 @@ namespace PdfiumViewer.Core
             if (_disposed)
                 throw new ObjectDisposedException(GetType().Name);
 
+            Debug.WriteLine($"rend page = {_pageIndex}");
             if ((flags & PdfRenderFlags.CorrectFromDpi) != 0)
             {
                 width = width * (int)dpiX / 72;

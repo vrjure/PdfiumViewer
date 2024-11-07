@@ -18,6 +18,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
 using System.Security.Cryptography;
+using System.Timers;
+using System.Windows.Threading;
 
 namespace PdfiumViewer
 {
@@ -110,17 +112,6 @@ namespace PdfiumViewer
             private set => SetValue(RenderRangePropertyKey, value);
         }
 
-        private const double DefaultZoomMin = 0.1;
-        private const double DefaultZoomMax = 4;
-
-        private Size _renderPageSize;
-        private double _renderZoom = 1;
-        private bool _autoPage = true;
-
-        static PDFViewer()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(PDFViewer), new FrameworkPropertyMetadata(typeof(PDFViewer)));
-        }
 
         private ScrollViewer _scroll;
         private ScrollViewer Scroll
@@ -143,7 +134,38 @@ namespace PdfiumViewer
         }
 
 
+        private const double DefaultZoomMin = 0.1;
+        private const double DefaultZoomMax = 4;
+
         private int _scrollPage;
+        private Size _renderPageSize;
+        private double _renderZoom = 1;
+        private bool _autoPage = true;
+        private Queue<RenderRange> _renderQueue;
+        private DispatcherTimer _renderTimer;
+        public PDFViewer()
+        {
+            _renderQueue = new Queue<RenderRange>();
+            _renderTimer = new DispatcherTimer(DispatcherPriority.Background, this.Dispatcher);
+            _renderTimer.Interval = TimeSpan.FromMilliseconds(50);
+            _renderTimer.Tick += _renderTimer_Tick;
+        }
+
+        static PDFViewer()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(PDFViewer), new FrameworkPropertyMetadata(typeof(PDFViewer)));
+        }
+
+
+        private void _renderTimer_Tick(object sender, EventArgs e)
+        {
+            if (_renderQueue.TryDequeue(out _))
+            {
+                Render();
+                RenderMarkers();
+                RefreshSelection();
+            }
+        }
 
         public override void OnApplyTemplate()
         {
@@ -229,9 +251,8 @@ namespace PdfiumViewer
             {
                 if (v.RenderRange != RenderRange.Invalid)
                 {
-                    v.Render();
-                    v.RenderMarkers();
-                    v.RefreshSelection();
+                    v._renderQueue.TryDequeue(out _);
+                    v._renderQueue.Enqueue(v.RenderRange);
                 }
             }
         }
@@ -258,6 +279,7 @@ namespace PdfiumViewer
             oldDoc?.Dispose();
             Items.Clear();
             SetCurrentValue(PageProperty, 0);
+            _renderTimer.Stop();
             if (newDoc == null)
             {
                 return;
@@ -269,6 +291,7 @@ namespace PdfiumViewer
                 return;
             }
 
+            _renderTimer.Start();
             _renderPageSize = GetRenderPageSize(0);
             for (var i = 0; i < PageCount; i++)
             {
@@ -355,7 +378,7 @@ namespace PdfiumViewer
                 var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height), 0);
                 var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
 
-                RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex  + 1, Items.Count - 1));
+                RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex + 1, Items.Count - 1));
                 Debug.WriteLine($"Render range = [{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}]]");
 
                 if (_autoPage)
@@ -470,7 +493,7 @@ namespace PdfiumViewer
 
                     frame.Source = bitmapImage;
                 }
-            });
+            }, System.Windows.Threading.DispatcherPriority.Background);
         }
 
         private void BeginRenderAnimation(Image frame, PdfPage page, Size renderSize)
@@ -503,8 +526,8 @@ namespace PdfiumViewer
                 RenderPage(frame, page, renderSize);
             };
 
-            scaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnimation, HandoffBehavior.Compose);
-            scaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnimation, HandoffBehavior.Compose);
+            scaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, scaleXAnimation, HandoffBehavior.SnapshotAndReplace);
+            scaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty, scaleYAnimation, HandoffBehavior.SnapshotAndReplace);
         }
 
         private void StopRenderAnimation(Image frame)

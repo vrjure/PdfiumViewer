@@ -66,8 +66,8 @@ namespace PdfiumViewer
             {
                 for (int i = RenderRange.RenderStartIndex; i <= RenderRange.RenderEndIndex; i++)
                 {
-                    var container = ItemContainerGenerator.ContainerFromIndex(i) as PDFViewerItemContainer; ;
-                    container.ClearMarker<PdfMatchMarker>();
+                    var container = ItemContainerGenerator.ContainerFromIndex(i) as PDFViewerItemContainer;
+                    container?.ClearMarker<PdfMatchMarker>();
                 }
                 return;
             }
