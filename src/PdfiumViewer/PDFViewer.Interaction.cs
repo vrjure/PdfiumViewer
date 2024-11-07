@@ -134,7 +134,7 @@ namespace PdfiumViewer
             }
 
             var page = Document.Pages[pageIndex];
-            var pdfPoint = page.DeviceToPage(new Point(mousePoint.X / Zoom, mousePoint.Y / Zoom));
+            var pdfPoint = page.DeviceToPage(new Point(mousePoint.X / _renderZoom, mousePoint.Y / _renderZoom));
             var index = page.GetCharIndexAtPos(pdfPoint.X, pdfPoint.Y, _ignore.X, _ignore.Y);
 
             if (index < 0 || index == _lastTextIndex) return;
@@ -284,7 +284,7 @@ namespace PdfiumViewer
                 }
 
                 var currentContainer = ItemContainerGenerator.ContainerFromIndex(item.PageIndex) as PDFViewerItemContainer;
-                currentContainer.AddOrUpdateMarker(marker, Zoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
+                currentContainer.AddOrUpdateMarker(marker, _renderZoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
             }
         }
 
@@ -304,7 +304,7 @@ namespace PdfiumViewer
                         marker.IsBoundsChanged = true;
                     }
                     var currentContainer = ItemContainerGenerator.ContainerFromIndex(i) as PDFViewerItemContainer;
-                    currentContainer.AddOrUpdateMarker(marker, Zoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
+                    currentContainer.AddOrUpdateMarker(marker, _renderZoom, SelectionBrush, SelectionBorderBrush, SelectionBorderThickness);
                 }
             }
         }

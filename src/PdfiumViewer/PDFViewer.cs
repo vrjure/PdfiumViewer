@@ -114,6 +114,7 @@ namespace PdfiumViewer
         private const double DefaultZoomMax = 4;
 
         private Size _renderPageSize;
+        private double _renderZoom = 1;
         private bool _autoPage = true;
 
         static PDFViewer()
@@ -271,10 +272,10 @@ namespace PdfiumViewer
             _renderPageSize = GetRenderPageSize(0);
             for (var i = 0; i < PageCount; i++)
             {
-                var image = new Image() 
-                { 
-                    Width = _renderPageSize.Width, 
-                    Height = _renderPageSize.Height, 
+                var image = new Image()
+                {
+                    Width = _renderPageSize.Width,
+                    Height = _renderPageSize.Height,
                     RenderTransformOrigin = new Point(0.5, 0.5),
                     LayoutTransform = new ScaleTransform()
                 };
@@ -286,10 +287,24 @@ namespace PdfiumViewer
 
         private void PageSizeRefresh()
         {
+            if (Document == null)
+            {
+                return;
+            }
+
             _renderPageSize = GetRenderPageSize(0);
             Render(true);
             RenderMarkers();
             RefreshSelection(true);
+        }
+
+        private Size GetRenderPageSize(int page)
+        {
+            var size = Document.Pages[page].Size;
+            var width = FitWidth ? this.ActualWidth : size.Width * Zoom;
+            _renderZoom = FitWidth ? width / size.Width : Zoom;
+            var height = FitWidth ? _renderZoom * size.Height : size.Height * _renderZoom;
+            return new Size(width, height);
         }
 
         private int GetPageCount()
@@ -432,35 +447,30 @@ namespace PdfiumViewer
             }
         }
 
-        private async void RenderPage(Image frame, PdfPage page, Size renderSize)
+        private void RenderPage(Image frame, PdfPage page, Size renderSize)
         {
             frame.Width = _renderPageSize.Width;
             frame.Height = _renderPageSize.Height;
-            using var image = await this.Dispatcher.InvokeAsync(() => page.Render((int)renderSize.Width, (int)renderSize.Height, Dpi, Dpi, Rotate, Flags));
-            using (var memory = new MemoryStream())
+            this.Dispatcher.BeginInvoke(() =>
             {
-                image.Save(memory, ImageFormat.Png);
-                memory.Position = 0;
+                var image = page.Render((int)renderSize.Width, (int)renderSize.Height, Dpi, Dpi, Rotate, Flags);
+                using (var memory = new MemoryStream())
+                {
+                    image.Save(memory, ImageFormat.Png);
+                    memory.Position = 0;
 
-                var bitmapImage = new BitmapImage();
+                    var bitmapImage = new BitmapImage();
 
-                bitmapImage.BeginInit();
-                bitmapImage.DecodePixelWidth = image.Width;
-                bitmapImage.DecodePixelHeight = image.Height;
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad; // not a mistake - see below
-                bitmapImage.EndInit();
+                    bitmapImage.BeginInit();
+                    bitmapImage.DecodePixelWidth = image.Width;
+                    bitmapImage.DecodePixelHeight = image.Height;
+                    bitmapImage.StreamSource = memory;
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad; // not a mistake - see below
+                    bitmapImage.EndInit();
 
-                frame.Source = bitmapImage;
-            }
-        }
-
-        private Size GetRenderPageSize(int page)
-        {
-            var size = Document.Pages[page].Size;
-            var width = FitWidth ? this.Width * Zoom : size.Width * Zoom;
-            var height = FitWidth ? (this.Width / size.Width) * size.Height * Zoom : size.Height * Zoom;
-            return new Size(width, height);
+                    frame.Source = bitmapImage;
+                }
+            });
         }
 
         private void BeginRenderAnimation(Image frame, PdfPage page, Size renderSize)
