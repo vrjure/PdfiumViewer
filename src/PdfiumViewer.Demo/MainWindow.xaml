@@ -206,7 +206,7 @@
                 <Image Source="Resources/fit_width.png" />
             </Button>
             
-            <!--<GridSplitter Background="Gray" Width="1" Margin="5,0"/>
+            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
             <Button ToolTip="Rotate Left"
                     Command="{Binding RotateLeftCommand}">
@@ -215,7 +215,7 @@
             <Button ToolTip="Rotate Right"
                     Command="{Binding RotateRightCommand}">
                 <Image Source="Resources/rotate_right.png" />
-            </Button>-->
+            </Button>
             <!--<GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
             <Button ToolTip="Transparent Page" Click="OnTransparent">
@@ -244,7 +244,8 @@
                                 Matches="{Binding Matches}"
                                 MatchIndex="{Binding MatchIndex}"
                                 FitWidth="{Binding FitWidth}"
-                                PageMode="{Binding PageMode}">
+                                PageMode="{Binding PageMode}"
+                                Rotation="{Binding Rotation}">
             <pdfiumViewer:PDFViewer.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Copy" Command="{Binding CopyCommand}"/>

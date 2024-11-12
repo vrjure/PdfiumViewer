@@ -69,11 +69,11 @@ namespace PdfiumViewer
             set => SetValue(FlagsProperty, value);
         }
 
-        public static readonly DependencyProperty RotateProperty = DependencyProperty.Register(nameof(Rotate), typeof(PdfRotation), typeof(PDFViewer), new FrameworkPropertyMetadata(PdfRotation.Rotate0, PropertyChanged));
-        public PdfRotation Rotate
+        public static readonly DependencyProperty RotationProperty = DependencyProperty.Register(nameof(Rotation), typeof(PdfRotation), typeof(PDFViewer), new FrameworkPropertyMetadata(PdfRotation.Rotate0, PropertyChanged));
+        public PdfRotation Rotation
         {
-            get => (PdfRotation)GetValue(RotateProperty);
-            set => SetValue(RotateProperty, value);
+            get => (PdfRotation)GetValue(RotationProperty);
+            set => SetValue(RotationProperty, value);
         }
 
         public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register(nameof(Zoom), typeof(double), typeof(PDFViewer), new FrameworkPropertyMetadata(1d, PropertyChanged, ZoomCoerceValueChanged));
@@ -228,7 +228,7 @@ namespace PdfiumViewer
                 }
                 v.ToPage();
             }
-            else if (e.Property == ZoomProperty || e.Property == FitWidthProperty || e.Property == PageModeProperty)
+            else if (e.Property == ZoomProperty || e.Property == FitWidthProperty || e.Property == PageModeProperty || e.Property == RotationProperty)
             {
                 v.ReadyToRender(v.PageSizeRefresh);
             }
@@ -340,21 +340,20 @@ namespace PdfiumViewer
         private Size GetRenderPageSize(int page)
         {
             var size = Document.Pages[page].Size;
+            var width = 0d;
             if (PageMode == PdfPageMode.Continuous)
             {
-                var width = FitWidth ? this.ActualWidth : size.Width * Zoom;
-                _renderZoom = FitWidth ? width / size.Width : Zoom;
-                var height = FitWidth ? _renderZoom * size.Height : size.Height * _renderZoom;
-                return new Size(width, height);
+                width = FitWidth ? this.ActualWidth : size.Width * Zoom;
+
             }
             else
             {
-                var width = FitWidth ? this.ActualWidth / 2 : size.Width * Zoom;
-                _renderZoom = FitWidth ? width / size.Width : Zoom;
-                var height = FitWidth ? _renderZoom * size.Height : size.Height * _renderZoom;
-                return new Size(width, height);
+                width = FitWidth ? this.ActualWidth / 2 : size.Width * Zoom;
             }
+            _renderZoom = FitWidth ? width / size.Width : Zoom;
+            var height = FitWidth ? _renderZoom * size.Height : size.Height * _renderZoom;
 
+            return new Size(width, height);
         }
 
         private int GetPageCount()
@@ -390,6 +389,12 @@ namespace PdfiumViewer
             Debug.WriteLine($"scrollchanged = [{e.VerticalChange}, {e.ExtentHeightChange}, {e.ViewportHeightChange}]");
             var firstContainer = ItemContainerGenerator.ContainerFromIndex(0) as FrameworkElement;
             var pageSize = firstContainer.RenderSize;
+            var itemHeight = Rotation switch
+            {
+                PdfRotation.Rotate90 => pageSize.Width,
+                PdfRotation.Rotate270 => pageSize.Width,
+                _ => pageSize.Height
+            };
 
             if (e.ExtentHeightChange != 0 && RenderRange != RenderRange.Invalid)
             {
@@ -411,20 +416,20 @@ namespace PdfiumViewer
 
                 if (PageMode == PdfPageMode.Continuous)
                 {
-                    var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height), 0);
-                    var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
+                    var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / itemHeight), 0);
+                    var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / itemHeight), PageCount - 1);
 
                     RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex + 1, Items.Count - 1));
-                    _scrollPage = (int)Math.Round(offset_v / pageSize.Height);
+                    _scrollPage = (int)Math.Round(offset_v / itemHeight);
                     
                 }
                 else if (PageMode == PdfPageMode.Double)
                 {
-                    var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height * 2), 0);
-                    var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height * 2), PageCount - 1);
+                    var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / itemHeight * 2), 0);
+                    var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / itemHeight * 2), PageCount - 1);
 
                     RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex + 1, Items.Count - 1));
-                    _scrollPage = (int)Math.Round(offset_v / pageSize.Height * 2);
+                    _scrollPage = (int)Math.Round(offset_v / itemHeight * 2);
                 }
 
                 Debug.WriteLine($"Render range = [{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}]]");
@@ -520,7 +525,7 @@ namespace PdfiumViewer
 
             this.Dispatcher.BeginInvoke(() =>
             {
-                var image = page.Render((int)renderSize.Width, (int)renderSize.Height, Dpi, Dpi, Rotate, Flags);
+                var image = page.Render((int)renderSize.Width, (int)renderSize.Height, Dpi, Dpi, PdfRotation.Rotate0, Flags);
                 using (var memory = new MemoryStream())
                 {
                     image.Save(memory, ImageFormat.Png);
@@ -549,18 +554,20 @@ namespace PdfiumViewer
                 return;
             }
 
-            var scaleTo = renderSize.Width / frame.Width;
+            var scaleToX = renderSize.Width / frame.Width;
+            var scaleToY = renderSize.Height / frame.Height;
+
             var duration = TimeSpan.FromSeconds(0.2);
             var scaleXAnimation = new DoubleAnimation
             {
-                To = scaleTo,
+                To = scaleToX,
                 FillBehavior = FillBehavior.Stop,
                 Duration = duration
             };
 
             var scaleYAnimation = new DoubleAnimation
             {
-                To = scaleTo,
+                To = scaleToY,
                 FillBehavior = FillBehavior.Stop,
                 Duration = duration
             };

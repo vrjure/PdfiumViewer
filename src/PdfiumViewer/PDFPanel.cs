@@ -26,6 +26,37 @@ namespace PdfiumViewer
             set => SetValue(PageModeProperty, value);
         }
 
+        public static readonly DependencyProperty RotationProperty = DependencyProperty.Register(nameof(Rotation), typeof(PdfRotation), typeof(PDFPanel), new FrameworkPropertyMetadata(PdfRotation.Rotate0, FrameworkPropertyMetadataOptions.AffectsArrange, PropertyChanged));
+        public PdfRotation Rotation
+        {
+            get => (PdfRotation)GetValue(RotationProperty);
+            set => SetValue(RotationProperty, value);
+        }
+
+        private static void PropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var panel = d as PDFPanel;
+            if (panel == null) return;
+
+            if (e.Property == RotationProperty)
+            {
+                panel.Rotate();
+            }
+        }
+
+        private void Rotate()
+        {
+            if (Children.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < Children.Count; i++)
+            {
+                var child = Children[i];
+            }
+        }
+
         protected override Size MeasureOverride(Size availableSize)
         {
             var w = availableSize.Width == double.PositiveInfinity ? 0 : availableSize.Width;
@@ -67,7 +98,7 @@ namespace PdfiumViewer
             var offset_y = 0d;
             for (int i = 0; i < Children.Count; i++)
             {
-                var child = Children[i];
+                var child = Children[i] as Control;
 
                 var itemSize = child.DesiredSize;
 
@@ -94,6 +125,22 @@ namespace PdfiumViewer
                 {
                     PdfPageMode.Continuous => offset_y + itemSize.Height,
                     PdfPageMode.Double => offset_y + itemSize.Height * (i % 2 == 0 ? 0 : 1),
+                    _ => 0
+                };
+
+                var trans = child.RenderTransform as RotateTransform;
+                if (trans == null)
+                {
+                    trans = new RotateTransform();
+                    child.RenderTransformOrigin = new Point(0.5, 0.5);
+                    child.LayoutTransform = trans;
+                }
+
+                trans.Angle = Rotation switch
+                {
+                    PdfRotation.Rotate90 => 90,
+                    PdfRotation.Rotate180 => 180,
+                    PdfRotation.Rotate270 => 270,
                     _ => 0
                 };
             }

@@ -1,4 +1,4 @@
-﻿namespace PdfiumViewer.Enums
+﻿namespace PdfiumViewer
 {
     /// <summary>
     /// Specifies the rotation of pages shown in the PDF renderer.

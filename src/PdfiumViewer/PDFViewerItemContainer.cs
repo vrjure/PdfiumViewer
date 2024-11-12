@@ -1,4 +1,5 @@
 ﻿using PdfiumViewer.Core;
+using PdfiumViewer.Enums;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -115,8 +116,16 @@ namespace PdfiumViewer
 
                 rect.Width = bound.Width * zoom;
                 rect.Height = bound.Height * zoom;
+
                 Canvas.SetLeft(rect, bound.Left * zoom);
                 Canvas.SetTop(rect, bound.Top * zoom);
+
+                var trans = OverlayLayer.RenderTransform as RotateTransform;
+                if (trans == null)
+                {
+                    trans = new RotateTransform();
+                    OverlayLayer.RenderTransformOrigin = new Point(0.5, 0.5);
+                }
 
                 marker.IsBoundsChanged = false;
             }

@@ -20,7 +20,8 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <pdf:PDFPanel PageMode="{Binding PageMode}"/>
+                    <pdf:PDFPanel PageMode="{Binding PageMode}"
+                                  Rotation="{Binding Rotation}"/>
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>
