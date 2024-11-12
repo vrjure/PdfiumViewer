@@ -16,9 +16,9 @@ Apache 2.0 License.
 - [x] search text
 - [x] bookmarks
 - [x] select text
-- [ ] page mode switch
-- [ ] rotate
-- [ ] get page text
+- [x] page mode switch
+- [x] rotate
+- [x] get page text
 
 [Download from NuGet](https://www.nuget.org/packages/PdfiumViewer.Net.WPF).
 
@@ -49,7 +49,7 @@ reference the native libraries.
 
 The PdfiumViewer library primarily consists out of three components:
 
-* The `PdfRenderer` control. This control implements the raw PDF renderer.
+* The `PDFViewer` control. This control implements the raw PDF renderer.
   This control displays a PDF document, provides zooming and scrolling
   functionality and exposes methods to perform more advanced actions;
 * The `PdfDocument` class provides access to the PDF document and wraps
