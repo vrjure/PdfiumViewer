@@ -104,6 +104,13 @@ namespace PdfiumViewer
             set => SetValue(FitWidthProperty, value);
         }
 
+        public static readonly DependencyProperty PageModeProperty = DependencyProperty.Register(nameof(PageMode), typeof(PdfPageMode), typeof(PDFViewer), new FrameworkPropertyMetadata(PdfPageMode.Continuous, PropertyChanged));
+        public PdfPageMode PageMode
+        {
+            get => (PdfPageMode)GetValue(PageModeProperty);
+            set => SetValue(PageModeProperty, value);
+        }
+
         private static readonly DependencyPropertyKey RenderRangePropertyKey = DependencyProperty.RegisterReadOnly(nameof(RenderRange), typeof(RenderRange), typeof(PDFViewer), new PropertyMetadata(RenderRange.Invalid, PropertyChanged));
         public static readonly DependencyProperty RenderRangeProperty = RenderRangePropertyKey.DependencyProperty;
         public RenderRange RenderRange
@@ -221,7 +228,7 @@ namespace PdfiumViewer
                 }
                 v.ToPage();
             }
-            else if (e.Property == ZoomProperty || e.Property == FitWidthProperty)
+            else if (e.Property == ZoomProperty || e.Property == FitWidthProperty || e.Property == PageModeProperty)
             {
                 v.ReadyToRender(v.PageSizeRefresh);
             }
@@ -325,7 +332,6 @@ namespace PdfiumViewer
                 return;
             }
 
-            _renderPageSize = GetRenderPageSize(0);
             Render(true);
             RenderMarkers();
             RefreshSelection(true);
@@ -334,10 +340,21 @@ namespace PdfiumViewer
         private Size GetRenderPageSize(int page)
         {
             var size = Document.Pages[page].Size;
-            var width = FitWidth ? this.ActualWidth : size.Width * Zoom;
-            _renderZoom = FitWidth ? width / size.Width : Zoom;
-            var height = FitWidth ? _renderZoom * size.Height : size.Height * _renderZoom;
-            return new Size(width, height);
+            if (PageMode == PdfPageMode.Continuous)
+            {
+                var width = FitWidth ? this.ActualWidth : size.Width * Zoom;
+                _renderZoom = FitWidth ? width / size.Width : Zoom;
+                var height = FitWidth ? _renderZoom * size.Height : size.Height * _renderZoom;
+                return new Size(width, height);
+            }
+            else
+            {
+                var width = FitWidth ? this.ActualWidth / 2 : size.Width * Zoom;
+                _renderZoom = FitWidth ? width / size.Width : Zoom;
+                var height = FitWidth ? _renderZoom * size.Height : size.Height * _renderZoom;
+                return new Size(width, height);
+            }
+
         }
 
         private int GetPageCount()
@@ -376,21 +393,41 @@ namespace PdfiumViewer
 
             if (e.ExtentHeightChange != 0 && RenderRange != RenderRange.Invalid)
             {
-                var offset = e.ExtentHeightChange / (Items.Count - RenderRange.Range) * RenderRange.RenderStartIndex;
-
-                Scroll.ScrollToVerticalOffset(e.VerticalOffset + offset - e.VerticalChange);
+                if (PageMode == PdfPageMode.Continuous)
+                {
+                    var offset = e.ExtentHeightChange / Items.Count * RenderRange.RenderStartIndex;
+                    Scroll.ScrollToVerticalOffset(e.VerticalOffset + offset - e.VerticalChange);
+                }
+                else
+                {
+                    var offset = e.ExtentHeightChange / Math.Ceiling(Items.Count / 2d) * (RenderRange.RenderStartIndex / 2);
+                    Scroll.ScrollToVerticalOffset(e.VerticalOffset + offset - e.VerticalChange);
+                }
             }
             else
             {
                 var viewPort_h = e.ViewportHeight;
                 var offset_v = e.VerticalOffset;
 
-                var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height), 0);
-                var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
+                if (PageMode == PdfPageMode.Continuous)
+                {
+                    var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height), 0);
+                    var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height), PageCount - 1);
 
-                RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex + 1, Items.Count - 1));
+                    RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex + 1, Items.Count - 1));
+                    _scrollPage = (int)Math.Round(offset_v / pageSize.Height);
+                    
+                }
+                else if (PageMode == PdfPageMode.Double)
+                {
+                    var renderStartIndex = Math.Max((int)((offset_v - viewPort_h) / pageSize.Height * 2), 0);
+                    var renderEndIndex = Math.Min((int)((offset_v + viewPort_h) / pageSize.Height * 2), PageCount - 1);
+
+                    RenderRange = new RenderRange(Math.Max(renderStartIndex, 0), Math.Min(renderEndIndex + 1, Items.Count - 1));
+                    _scrollPage = (int)Math.Round(offset_v / pageSize.Height * 2);
+                }
+
                 Debug.WriteLine($"Render range = [{RenderRange.RenderStartIndex},{RenderRange.RenderEndIndex}]]");
-                _scrollPage = (int)Math.Round(offset_v / pageSize.Height);
                 if (_scrollPage < Items.Count)
                 {
                     SetCurrentValue(PageProperty, _scrollPage);
@@ -400,6 +437,7 @@ namespace PdfiumViewer
 
         private void Render(bool force = false)
         {
+            _renderPageSize = GetRenderPageSize(0);
             if (this.RenderRange != RenderRange.Invalid && RenderRange.RenderStartIndex <= RenderRange.RenderEndIndex && RenderRange.RenderStartIndex >= 0)
             {
                 Render(RenderRange.RenderStartIndex, Math.Min(RenderRange.RenderEndIndex, Items.Count - 1), force);

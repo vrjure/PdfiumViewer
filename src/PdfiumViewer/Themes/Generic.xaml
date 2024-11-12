@@ -20,11 +20,11 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Vertical"/>
+                    <pdf:PDFPanel PageMode="{Binding PageMode}"/>
                 </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>
-       
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="pdf:PDFViewer">

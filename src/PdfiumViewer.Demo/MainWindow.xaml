@@ -12,7 +12,7 @@
     <Grid >
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
-            <RowDefinition />
+            <RowDefinition Height="*"/>
             <RowDefinition Height="30" />
         </Grid.RowDefinitions>
         <ToolBar Grid.Row="0" Background="WhiteSmoke">
@@ -182,24 +182,24 @@
                 </b:Interaction.Behaviors>
             </TextBox>
             <TextBlock VerticalAlignment="Center" FontSize="14" Text="%" />
-            <!--<GridSplitter Background="Gray" Width="1" Margin="5,0"/>
+            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
-            <Button ToolTip="Single Page Mode"
+            <!--<Button ToolTip="Single Page Mode"
                     Command="{Binding PageModeCommand}"
-                    CommandParameter="SinglePageMode">
+                    CommandParameter="Single">
                 <Image Source="Resources/one_page.png" />
-            </Button>
+            </Button>-->
             <Button ToolTip="Book Mode"
                     Command="{Binding PageModeCommand}"
-                    CommandParameter="BookMode">
+                    CommandParameter="Double">
                 <Image Source="Resources/two_page.png" />
             </Button>
             <Button ToolTip="Continuous Pages Mode"
                     Command="{Binding PageModeCommand}"
-                    CommandParameter="ContinuousMode">
+                    CommandParameter="Continuous">
                 <Image Source="Resources/continuous_mode.png" />
             </Button>
-            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>-->
+            <GridSplitter Background="Gray" Width="1" Margin="5,0"/>
 
             <Button ToolTip="Fit Width"
                     Command="{Binding FitWidthCommand}">
@@ -243,7 +243,8 @@
                                 HighlightAllMatches="{Binding HighlightAllMatches}"
                                 Matches="{Binding Matches}"
                                 MatchIndex="{Binding MatchIndex}"
-                                FitWidth="{Binding FitWidth}">
+                                FitWidth="{Binding FitWidth}"
+                                PageMode="{Binding PageMode}">
             <pdfiumViewer:PDFViewer.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Copy" Command="{Binding CopyCommand}"/>

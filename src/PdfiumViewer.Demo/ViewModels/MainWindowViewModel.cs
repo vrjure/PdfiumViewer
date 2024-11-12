@@ -45,7 +45,7 @@ namespace PdfiumViewer.Demo.ViewModels
         public ICommand ZoomOutCommand => _zoomOutCommand ??= new RelayCommand(() => Zoom = Math.Max(Zoom - 0.2, ZoomMin));
 
         private ICommand _pageModeCommand;
-        public ICommand PageModeCommand => _pageModeCommand ??= new RelayCommand<string>(mode=> PageMode = Enum.Parse<PdfViewerPagesDisplayMode>(mode));
+        public ICommand PageModeCommand => _pageModeCommand ??= new RelayCommand<string>(mode=> PageMode = Enum.Parse<PdfPageMode>(mode));
 
         private ICommand _fitWidthCommand;
         public ICommand FitWidthCommand => _fitWidthCommand ??= new RelayCommand(() => FitWidth = !FitWidth);
@@ -232,8 +232,8 @@ namespace PdfiumViewer.Demo.ViewModels
             set => SetProperty(ref _zoomMin, value);
         }
 
-        private PdfViewerPagesDisplayMode _pageMode = PdfViewerPagesDisplayMode.ContinuousMode;
-        public PdfViewerPagesDisplayMode PageMode
+        private PdfPageMode _pageMode = PdfPageMode.Continuous;
+        public PdfPageMode PageMode
         {
             get => _pageMode;
             set => SetProperty(ref _pageMode, value);
